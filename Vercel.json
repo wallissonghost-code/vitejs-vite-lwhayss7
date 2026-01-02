@@ -1,8 +1,9 @@
 {
-    "functions": {
-        "api/generate-project.js": {
-              "maxDuration": 30
-                  }
-                    }
-                    }
+  "name": "redbox-ia-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.0.0"
+  }
 }
