@@ -1,8 +1,6 @@
-{
-  "name": "redbox-ia-api",
+{"name": "redbox-ia-api",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "openai": "^4.0.0"
-  }
+    "openai": "^4.0.0"}
