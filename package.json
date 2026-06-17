@@ -4,12 +4,14 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite --host 0.0.0.0\" \"node server/v5.js\"",
+    "dev": "concurrently \"vite --host 0.0.0.0\" \"node server/v12.js\"",
     "client": "vite --host 0.0.0.0",
-    "server": "node server/v5.js",
+    "server": "node server/v12.js",
+    "server:v12": "node server/v12.js",
+    "server:v5": "node server/v5.js",
     "server:json": "node server/index.js",
     "build": "vite build",
-    "start": "node server/v5.js",
+    "start": "NODE_ENV=production node server/v12.js",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
