@@ -25,6 +25,7 @@
     "cors": "latest",
     "multer": "latest",
     "concurrently": "latest",
-    "better-sqlite3": "latest"
+    "better-sqlite3": "latest",
+    "bcryptjs": "latest"
   }
 }
