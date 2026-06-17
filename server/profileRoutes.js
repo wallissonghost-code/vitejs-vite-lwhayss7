@@ -1,5 +1,8 @@
+import { publicUser } from "./sqliteStore.js";
+import { requireAuth } from "./auth.js";
+
 export function registerProfileRoutes(app) {
-  app.get("/api/profile-ping", (_req, res) => {
-    res.json({ ok: true });
+  app.get("/api/profile", requireAuth, (req, res) => {
+    res.json(publicUser(req.user));
   });
 }
