@@ -2,10 +2,16 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V11
+## O que já tem na V12
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
+- Servidor principal atualizado para `server/v12.js`
+- Upload preparado para produção
+- Upload com nome limpo e extensão preservada
+- Configuração de upload por variáveis de ambiente
+- Suporte a URL pública/CDN com `PUBLIC_UPLOAD_BASE_URL`
+- Health check com dados de storage em `GET /api/health`
 - Banco SQLite real usando `better-sqlite3`
 - Login e cadastro com usuário/senha
 - Senhas protegidas com `bcryptjs`
@@ -44,35 +50,66 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Tabelas SQLite para usuários, sessões, vídeos, comentários, notificações, denúncias e saques
 - API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira, presentes, moderação e monetização
 - Painel admin para a conta `ghost`
-- Admin vê resumo de usuários, vídeos, comentários e moedas
-- Admin lista usuários e vídeos
-- Admin adiciona/remove moedas de usuários
-- Admin apaga vídeos
 - Vídeos com autoplay, legenda, música e hashtags
 - Curtir, salvar, comentar, compartilhar e seguir
 - Presentes/moedas nos vídeos
-- Carteira fake com recarga demonstrativa
 - Ranking de criadores por pontuação
 - Aba Buscar com filtro por usuário, legenda, música e hashtag
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
 
+## Produção e upload
+
+A V12 usa `server/uploadStorage.js` para controlar os uploads.
+
+Principais variáveis de ambiente:
+
+| Variável | Função | Padrão |
+|---|---|---|
+| `PORT` | Porta do backend | `3001` |
+| `NODE_ENV` | Modo do servidor | `development` |
+| `CORS_ORIGIN` | Domínio permitido no CORS | `*` |
+| `TRUST_PROXY` | Ativa proxy reverso quando `true` | `false` |
+| `UPLOADS_DIR` | Pasta local dos uploads | `uploads` |
+| `MAX_UPLOAD_MB` | Tamanho máximo do vídeo em MB | `200` |
+| `PUBLIC_UPLOAD_BASE_URL` | URL pública/CDN dos uploads | vazio |
+| `JSON_LIMIT` | Limite do body JSON | `10mb` |
+
+Documentação completa: `docs/PRODUCAO.md`.
+
+## Rodar no Replit
+
+```bash
+npm install
+npm run dev
+```
+
+O comando `npm run dev` sobe duas coisas ao mesmo tempo:
+
+- Vite/React no frontend
+- Express API V12 com SQLite no backend, porta `3001`
+
+## Rodar em produção
+
+```bash
+npm run build
+npm start
+```
+
+## Scripts úteis
+
+```bash
+npm run dev        # frontend + backend V12
+npm run server     # apenas backend V12
+npm run server:v12 # apenas backend V12
+npm run server:v5  # backend antigo V5, backup
+npm run server:json # backend antigo em JSON, caso precise voltar
+npm run client     # apenas frontend
+```
+
 ## Carteira de criador
 
 O botão flutuante **Carteira** mostra ganhos simulados com base nos presentes recebidos nos vídeos.
-
-A carteira mostra:
-
-- saldo disponível
-- ganhos totais
-- saques pendentes
-- saques pagos
-- presentes recebidos
-- quantidade de vídeos
-
-O criador pode solicitar saque fake informando valor e chave PIX.
-
-A conta admin `ghost` pode aprovar ou recusar pedidos de saque.
 
 Rotas:
 
@@ -85,12 +122,6 @@ Rotas:
 
 O botão flutuante **Denunciar** permite escolher um vídeo, selecionar o motivo e enviar detalhes opcionais.
 
-A conta admin `ghost` vê a lista de denúncias no mesmo painel e pode:
-
-- marcar como revisada
-- dispensar
-- remover o vídeo denunciado
-
 Rotas:
 
 - `POST /api/videos/:id/report`
@@ -100,16 +131,6 @@ Rotas:
 ## Feed IA
 
 O botão flutuante **Feed IA** abre recomendações ordenadas por algoritmo.
-
-O score considera:
-
-- engajamento do vídeo
-- vídeos recentes
-- criadores que o usuário segue
-- criadores parecidos com vídeos curtidos/salvos
-- hashtags parecidas com interesses do usuário
-- presentes recebidos
-- penalização para vídeos já curtidos/salvos
 
 Rota:
 
@@ -129,18 +150,7 @@ Exemplo:
 #/@ghost
 ```
 
-Ao entrar logado, o botão flutuante **Meu perfil** abre seu perfil público. Dentro do perfil dá para compartilhar o link e seguir o usuário.
-
 ## Notificações
-
-O botão flutuante **Inbox** mostra o contador de notificações não lidas.
-
-As notificações são geradas quando:
-
-- alguém comenta em um vídeo seu
-- alguém curte um vídeo seu
-- alguém envia presente em um vídeo seu
-- alguém segue seu perfil público
 
 Rotas:
 
@@ -157,31 +167,6 @@ senha: 123456
 
 Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel administrativo.
 
-Também é possível criar novas contas pela tela de cadastro.
-
-## Rodar no Replit
-
-```bash
-npm install
-npm run dev
-```
-
-O comando `npm run dev` sobe duas coisas ao mesmo tempo:
-
-- Vite/React no frontend
-- Express API V5/V6/V7/V8/V9/V10/V11 com SQLite no backend, porta `3001`
-
-O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
-
-## Scripts úteis
-
-```bash
-npm run dev       # frontend + backend SQLite
-npm run server    # apenas backend SQLite
-npm run client    # apenas frontend
-npm run server:json # backend antigo em JSON, caso precise voltar
-```
-
 ## API principal
 
 ### Autenticação
@@ -190,34 +175,6 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
-
-### Monetização
-
-- `GET /api/creator/wallet`
-- `POST /api/creator/payouts`
-- `GET /api/admin/payouts`
-- `POST /api/admin/payouts/:id/status`
-
-### Feed IA
-
-- `GET /api/feed/recommended`
-
-### Perfil público
-
-- `GET /api/public/profile/:user`
-- `POST /api/public/profile/:user/follow`
-
-### Notificações
-
-- `GET /api/notifications`
-- `POST /api/notifications/:id/read`
-- `POST /api/notifications/read-all`
-
-### Moderação
-
-- `POST /api/videos/:id/report`
-- `GET /api/admin/reports`
-- `POST /api/admin/reports/:id/status`
 
 ### App
 
@@ -254,5 +211,5 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 ## Próximas melhorias
 
 - Gateway real de pagamento
-- Upload em nuvem
+- Storage real S3/Cloudinary/Supabase
 - Página web externa dos criadores
