@@ -24,6 +24,7 @@
     "express": "latest",
     "cors": "latest",
     "multer": "latest",
-    "concurrently": "latest"
+    "concurrently": "latest",
+    "better-sqlite3": "latest"
   }
 }
