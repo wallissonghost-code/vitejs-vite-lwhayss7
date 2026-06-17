@@ -1,11 +1,14 @@
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Bookmark,
-  Camera,
   CheckCircle2,
   ChevronRight,
+  Coins,
+  Crown,
   Flame,
+  Gift,
   Heart,
   Home,
   Inbox,
@@ -17,8 +20,10 @@ import {
   Share2,
   Sparkles,
   TrendingUp,
+  Trophy,
   UploadCloud,
   User,
+  Wallet,
   X
 } from "lucide-react";
 
@@ -34,11 +39,35 @@ type VideoPost = {
   likes: number;
   comments: number;
   shares: number;
+  gifts: number;
   verified: boolean;
   following: boolean;
 };
 
-type Tab = "home" | "search" | "upload" | "inbox" | "profile";
+type CreatorProfile = {
+  user: string;
+  name: string;
+  bio: string;
+  avatar: string;
+  coins: number;
+  followers: number;
+};
+
+type Tab = "home" | "search" | "inbox" | "profile";
+
+type GiftOption = {
+  id: string;
+  name: string;
+  emoji: string;
+  coins: number;
+};
+
+const gifts: GiftOption[] = [
+  { id: "rose", name: "Rosa", emoji: "🌹", coins: 5 },
+  { id: "fire", name: "Fogo", emoji: "🔥", coins: 15 },
+  { id: "crown", name: "Coroa", emoji: "👑", coins: 50 },
+  { id: "diamond", name: "Diamante", emoji: "💎", coins: 100 }
+];
 
 const seedVideos: VideoPost[] = [
   {
@@ -48,12 +77,13 @@ const seedVideos: VideoPost[] = [
     avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=gxst",
     videoUrl:
       "https://videos.pexels.com/video-files/853789/853789-hd_720_1280_25fps.mp4",
-    caption: "Bem-vindo ao GXST Vibes: vídeos curtos, trends, ranking e criadores em destaque.",
+    caption: "Bem-vindo ao GXST Vibes: vídeos curtos, trends, ranking e criadores em destaque. #gxst #viral",
     music: "Som original - GXST Vibes",
     tags: ["gxst", "viral", "shorts"],
     likes: 12890,
     comments: 342,
     shares: 118,
+    gifts: 740,
     verified: true,
     following: false
   },
@@ -64,12 +94,13 @@ const seedVideos: VideoPost[] = [
     avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=modelofx",
     videoUrl:
       "https://videos.pexels.com/video-files/2792370/2792370-hd_720_1280_30fps.mp4",
-    caption: "Ensaio premium com estética urbana para capa digital.",
+    caption: "Ensaio premium com estética urbana para capa digital. #modelo #fx",
     music: "Trend premium - FX Studio",
     tags: ["modelo", "fx", "capa"],
     likes: 8420,
     comments: 219,
     shares: 77,
+    gifts: 320,
     verified: false,
     following: true
   },
@@ -80,18 +111,28 @@ const seedVideos: VideoPost[] = [
     avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=ghostcreator",
     videoUrl:
       "https://videos.pexels.com/video-files/3571264/3571264-hd_720_1280_30fps.mp4",
-    caption: "Criador em destaque da semana. Poste, cresça e entre no ranking.",
+    caption: "Criador em destaque da semana. Poste, cresça e entre no ranking. #creator #ranking",
     music: "Beat exclusivo - Ghost",
     tags: ["creator", "ranking", "vibes"],
     likes: 3960,
     comments: 144,
     shares: 61,
+    gifts: 190,
     verified: true,
     following: false
   }
 ];
 
 const sampleVideoUrls = seedVideos.map((video) => video.videoUrl);
+
+const defaultUser: CreatorProfile = {
+  user: "meu.perfil",
+  name: "Meu Perfil",
+  bio: "Creator GXST Vibes • vídeos curtos, trends, capas e divulgação.",
+  avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=wallissonghost",
+  coins: 250,
+  followers: 1500
+};
 
 function loadVideos() {
   try {
@@ -104,39 +145,58 @@ function loadVideos() {
   }
 }
 
-function loadRecord(key: string) {
+function loadRecord<T>(key: string, fallback: T): T {
   try {
     const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : {};
+    return saved ? JSON.parse(saved) : fallback;
   } catch {
-    return {};
+    return fallback;
   }
 }
 
 export default function App() {
   const [videos, setVideos] = useState<VideoPost[]>(loadVideos);
+  const [profile, setProfile] = useState<CreatorProfile>(() =>
+    loadRecord("gxst-profile", defaultUser)
+  );
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [feedMode, setFeedMode] = useState<"following" | "foryou">("foryou");
-  const [liked, setLiked] = useState<Record<number, boolean>>(() => loadRecord("gxst-liked"));
-  const [saved, setSaved] = useState<Record<number, boolean>>(() => loadRecord("gxst-saved"));
+  const [liked, setLiked] = useState<Record<number, boolean>>(() =>
+    loadRecord("gxst-liked", {})
+  );
+  const [saved, setSaved] = useState<Record<number, boolean>>(() =>
+    loadRecord("gxst-saved", {})
+  );
   const [query, setQuery] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [giftVideo, setGiftVideo] = useState<VideoPost | null>(null);
   const [commentVideo, setCommentVideo] = useState<VideoPost | null>(null);
   const [comments, setComments] = useState<Record<number, string[]>>(() =>
-    loadRecord("gxst-comments")
+    loadRecord("gxst-comments", {})
   );
   const [commentText, setCommentText] = useState("");
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
   const [form, setForm] = useState({
-    creator: "Meu Perfil",
-    user: "meu.perfil",
+    creator: defaultUser.name,
+    user: defaultUser.user,
     caption: "",
     music: "Som original - Meu Perfil",
     videoUrl: ""
   });
 
   useEffect(() => {
-    localStorage.setItem("gxst-videos", JSON.stringify(videos));
+    const persistable = videos.map((video) =>
+      video.videoUrl.startsWith("blob:")
+        ? { ...video, videoUrl: sampleVideoUrls[0] }
+        : video
+    );
+    localStorage.setItem("gxst-videos", JSON.stringify(persistable));
   }, [videos]);
+
+  useEffect(() => {
+    localStorage.setItem("gxst-profile", JSON.stringify(profile));
+  }, [profile]);
 
   useEffect(() => {
     localStorage.setItem("gxst-liked", JSON.stringify(liked));
@@ -149,6 +209,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("gxst-comments", JSON.stringify(comments));
   }, [comments]);
+
+  useEffect(() => {
+    setForm((current) => ({ ...current, creator: profile.name, user: profile.user }));
+  }, [profile.name, profile.user]);
 
   const visibleVideos = useMemo(() => {
     if (feedMode === "following") {
@@ -174,6 +238,16 @@ export default function App() {
       return searchable.includes(text);
     });
   }, [query, videos]);
+
+  const ranking = useMemo(() => {
+    return [...videos]
+      .sort((a, b) => scoreVideo(b) - scoreVideo(a))
+      .slice(0, 5);
+  }, [videos]);
+
+  const myVideos = videos.filter((video) => video.user === profile.user);
+  const totalLikes = myVideos.reduce((sum, video) => sum + video.likes, 0);
+  const totalGifts = myVideos.reduce((sum, video) => sum + video.gifts, 0);
 
   function toggleLike(id: number) {
     const nextLiked = !liked[id];
@@ -215,7 +289,7 @@ export default function App() {
         alert("Texto copiado para compartilhar.");
       }
     } catch {
-      // Usuário cancelou o compartilhamento.
+      return;
     }
   }
 
@@ -226,14 +300,17 @@ export default function App() {
       return;
     }
 
-    const videoUrl = form.videoUrl.trim() || sampleVideoUrls[Math.floor(Math.random() * sampleVideoUrls.length)];
+    const videoUrl =
+      selectedVideoUrl ||
+      form.videoUrl.trim() ||
+      sampleVideoUrls[Math.floor(Math.random() * sampleVideoUrls.length)];
+
+    const cleanUser = form.user.trim().replace("@", "") || profile.user;
     const nextVideo: VideoPost = {
       id: Date.now(),
-      user: form.user.trim().replace("@", "") || "meu.perfil",
-      name: form.creator.trim() || "Meu Perfil",
-      avatar: `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(
-        form.user || "meu-perfil"
-      )}`,
+      user: cleanUser,
+      name: form.creator.trim() || profile.name,
+      avatar: `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(cleanUser)}`,
       videoUrl,
       caption,
       music: form.music.trim() || "Som original - Meu Perfil",
@@ -241,18 +318,20 @@ export default function App() {
       likes: 0,
       comments: 0,
       shares: 0,
+      gifts: 0,
       verified: false,
       following: false
     };
 
     setVideos((current) => [nextVideo, ...current]);
     setForm({
-      creator: "Meu Perfil",
-      user: "meu.perfil",
+      creator: profile.name,
+      user: profile.user,
       caption: "",
       music: "Som original - Meu Perfil",
       videoUrl: ""
     });
+    setSelectedVideoUrl("");
     setUploadOpen(false);
     setActiveTab("home");
     setFeedMode("foryou");
@@ -273,8 +352,35 @@ export default function App() {
     setCommentText("");
   }
 
-  const totalLikes = videos.reduce((sum, video) => sum + video.likes, 0);
-  const myVideos = videos.filter((video) => video.user === "meu.perfil");
+  function sendGift(gift: GiftOption) {
+    if (!giftVideo) return;
+    if (profile.coins < gift.coins) {
+      alert("Você não tem moedas suficientes. Use o botão de recarga fake na carteira.");
+      return;
+    }
+
+    setProfile((current) => ({ ...current, coins: current.coins - gift.coins }));
+    setVideos((current) =>
+      current.map((video) =>
+        video.id === giftVideo.id
+          ? { ...video, gifts: video.gifts + gift.coins, likes: video.likes + 1 }
+          : video
+      )
+    );
+    setGiftVideo(null);
+  }
+
+  function saveProfile() {
+    const cleanUser = profile.user.trim().replace("@", "") || "meu.perfil";
+    setProfile((current) => ({
+      ...current,
+      user: cleanUser,
+      name: current.name.trim() || "Meu Perfil",
+      bio: current.bio.trim() || defaultUser.bio,
+      avatar: `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(cleanUser)}`
+    }));
+    setEditProfileOpen(false);
+  }
 
   return (
     <div className="app-shell">
@@ -307,11 +413,11 @@ export default function App() {
               video={video}
               liked={!!liked[video.id]}
               saved={!!saved[video.id]}
-              comments={comments[video.id] || []}
               onLike={() => toggleLike(video.id)}
               onSave={() => toggleSave(video.id)}
               onFollow={() => toggleFollow(video.id)}
               onComment={() => setCommentVideo(video)}
+              onGift={() => setGiftVideo(video)}
               onShare={() => shareVideo(video)}
             />
           ))}
@@ -346,6 +452,31 @@ export default function App() {
             ))}
           </div>
 
+          <div className="ranking-card">
+            <div className="ranking-title">
+              <Trophy size={20} />
+              <strong>Ranking de criadores</strong>
+            </div>
+            {ranking.map((video, index) => (
+              <button
+                className="ranking-row"
+                key={video.id}
+                onClick={() => {
+                  setActiveTab("home");
+                  setFeedMode("foryou");
+                }}
+              >
+                <span className="rank-position">#{index + 1}</span>
+                <img src={video.avatar} alt={video.name} />
+                <div>
+                  <strong>@{video.user}</strong>
+                  <small>{formatNumber(scoreVideo(video))} pontos</small>
+                </div>
+                <ChevronRight size={17} />
+              </button>
+            ))}
+          </div>
+
           <div className="grid-results">
             {filteredVideos.map((video) => (
               <button
@@ -375,7 +506,7 @@ export default function App() {
           </div>
 
           <Notification icon={<Heart />} title="Curtidas chegando" text="Seus vídeos somam novas curtidas no ranking." />
-          <Notification icon={<MessageCircle />} title="Comentários" text="Responda comentários para aumentar o alcance." />
+          <Notification icon={<Gift />} title="Presentes ativados" text="Criadores agora podem receber rosas, coroas e diamantes." />
           <Notification icon={<TrendingUp />} title="Trend em alta" text="A hashtag #gxst está crescendo hoje." />
         </section>
       )}
@@ -383,33 +514,45 @@ export default function App() {
       {activeTab === "profile" && (
         <section className="page profile-page">
           <div className="profile-cover"></div>
-          <img
-            className="profile-avatar"
-            src="https://api.dicebear.com/8.x/avataaars/svg?seed=wallissonghost"
-            alt="Meu perfil"
-          />
-          <h1>@meu.perfil</h1>
-          <p>Creator GXST Vibes • vídeos curtos, trends, capas e divulgação.</p>
+          <img className="profile-avatar" src={profile.avatar} alt={profile.name} />
+          <h1>@{profile.user}</h1>
+          <p>{profile.bio}</p>
+
+          <div className="wallet-card">
+            <div>
+              <span>Carteira</span>
+              <strong>{profile.coins} moedas</strong>
+            </div>
+            <button onClick={() => setProfile((current) => ({ ...current, coins: current.coins + 100 }))}>
+              +100 fake
+            </button>
+          </div>
 
           <div className="profile-stats">
             <div>
-              <strong>{myVideos.length || 1}</strong>
+              <strong>{myVideos.length}</strong>
               <span>Vídeos</span>
             </div>
             <div>
-              <strong>1.5K</strong>
+              <strong>{formatNumber(profile.followers)}</strong>
               <span>Seguidores</span>
             </div>
             <div>
-              <strong>{formatNumber(totalLikes)}</strong>
-              <span>Curtidas</span>
+              <strong>{formatNumber(totalLikes + totalGifts)}</strong>
+              <span>Pontos</span>
             </div>
           </div>
 
-          <button className="primary-wide" onClick={() => setUploadOpen(true)}>
-            Publicar novo vídeo
-            <ChevronRight size={18} />
-          </button>
+          <div className="profile-actions">
+            <button className="primary-wide" onClick={() => setUploadOpen(true)}>
+              Publicar vídeo
+              <ChevronRight size={18} />
+            </button>
+            <button className="secondary-wide" onClick={() => setEditProfileOpen(true)}>
+              Editar perfil
+              <User size={18} />
+            </button>
+          </div>
 
           <div className="profile-grid">
             {videos.slice(0, 6).map((video) => (
@@ -439,9 +582,23 @@ export default function App() {
               <UploadCloud />
             </div>
             <h2>Publicar vídeo</h2>
-            <p>
-              Na V1 você pode publicar usando uma URL de vídeo. Sem URL, o app usa um vídeo de exemplo.
-            </p>
+            <p>Escolha um vídeo do aparelho ou cole uma URL .mp4. Sem vídeo, o app usa um exemplo.</p>
+
+            <label className="file-picker">
+              <UploadCloud size={19} />
+              <span>{selectedVideoUrl ? "Vídeo selecionado" : "Selecionar vídeo do aparelho"}</span>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setSelectedVideoUrl(URL.createObjectURL(file));
+                }}
+              />
+            </label>
+
+            {selectedVideoUrl && <video className="upload-preview" src={selectedVideoUrl} controls />}
 
             <input
               placeholder="Nome do criador"
@@ -464,7 +621,7 @@ export default function App() {
               onChange={(event) => setForm({ ...form, music: event.target.value })}
             />
             <textarea
-              placeholder="Legenda do vídeo..."
+              placeholder="Legenda do vídeo... use #hashtags"
               value={form.caption}
               onChange={(event) => setForm({ ...form, caption: event.target.value })}
             />
@@ -473,6 +630,66 @@ export default function App() {
               Publicar agora
               <Send size={18} />
             </button>
+          </section>
+        </div>
+      )}
+
+      {editProfileOpen && (
+        <div className="modal-backdrop">
+          <section className="modal-card">
+            <button className="modal-close" onClick={() => setEditProfileOpen(false)} aria-label="Fechar">
+              <X />
+            </button>
+            <div className="modal-icon">
+              <Crown />
+            </div>
+            <h2>Editar perfil</h2>
+            <p>Essas informações ficam salvas no navegador enquanto a V2 não tem banco de dados.</p>
+            <input
+              placeholder="Nome"
+              value={profile.name}
+              onChange={(event) => setProfile({ ...profile, name: event.target.value })}
+            />
+            <input
+              placeholder="Usuário"
+              value={profile.user}
+              onChange={(event) => setProfile({ ...profile, user: event.target.value })}
+            />
+            <textarea
+              placeholder="Bio"
+              value={profile.bio}
+              onChange={(event) => setProfile({ ...profile, bio: event.target.value })}
+            />
+            <button className="primary-wide" onClick={saveProfile}>
+              Salvar perfil
+              <CheckCircle2 size={18} />
+            </button>
+          </section>
+        </div>
+      )}
+
+      {giftVideo && (
+        <div className="modal-backdrop">
+          <section className="modal-card gift-modal">
+            <button className="modal-close" onClick={() => setGiftVideo(null)} aria-label="Fechar">
+              <X />
+            </button>
+            <div className="modal-icon">
+              <Gift />
+            </div>
+            <h2>Enviar presente</h2>
+            <p>
+              Saldo atual: <strong>{profile.coins} moedas</strong>. Presentes aumentam os pontos do criador.
+            </p>
+            <div className="gift-grid">
+              {gifts.map((gift) => (
+                <button key={gift.id} onClick={() => sendGift(gift)}>
+                  <span>{gift.emoji}</span>
+                  <strong>{gift.name}</strong>
+                  <small>{gift.coins} moedas</small>
+                </button>
+              ))}
+            </div>
           </section>
         </div>
       )}
@@ -524,21 +741,21 @@ function VideoCard({
   video,
   liked,
   saved,
-  comments,
   onLike,
   onSave,
   onFollow,
   onComment,
+  onGift,
   onShare
 }: {
   video: VideoPost;
   liked: boolean;
   saved: boolean;
-  comments: string[];
   onLike: () => void;
   onSave: () => void;
   onFollow: () => void;
   onComment: () => void;
+  onGift: () => void;
   onShare: () => void;
 }) {
   return (
@@ -575,7 +792,8 @@ function VideoCard({
 
       <aside className="action-stack">
         <ActionButton active={liked} icon={<Heart />} label={formatNumber(video.likes)} onClick={onLike} />
-        <ActionButton icon={<MessageCircle />} label={formatNumber(video.comments + comments.length)} onClick={onComment} />
+        <ActionButton icon={<MessageCircle />} label={formatNumber(video.comments)} onClick={onComment} />
+        <ActionButton icon={<Gift />} label={formatNumber(video.gifts)} onClick={onGift} />
         <ActionButton icon={<Share2 />} label={formatNumber(video.shares)} onClick={onShare} />
         <ActionButton active={saved} icon={<Bookmark />} label="Salvar" onClick={onSave} />
         <div className="disc">
@@ -592,7 +810,7 @@ function ActionButton({
   active,
   onClick
 }: {
-  icon: JSX.Element;
+  icon: ReactNode;
   label: string;
   active?: boolean;
   onClick: () => void;
@@ -611,7 +829,7 @@ function NavButton({
   active,
   onClick
 }: {
-  icon: JSX.Element;
+  icon: ReactNode;
   label: string;
   active: boolean;
   onClick: () => void;
@@ -624,7 +842,7 @@ function NavButton({
   );
 }
 
-function Notification({ icon, title, text }: { icon: JSX.Element; title: string; text: string }) {
+function Notification({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
     <div className="notification-card">
       <div className="notification-icon">{icon}</div>
@@ -641,6 +859,10 @@ function extractTags(text: string) {
   const found = text.match(/#[a-zA-Z0-9_À-ÿ]+/g) || [];
   const tags = found.map((tag) => tag.replace("#", "").toLowerCase());
   return tags.length ? tags.slice(0, 4) : ["gxst", "vibes"];
+}
+
+function scoreVideo(video: VideoPost) {
+  return video.likes + video.comments * 2 + video.shares * 4 + video.gifts * 5;
 }
 
 function formatNumber(value: number) {
