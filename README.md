@@ -2,7 +2,7 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V7
+## O que já tem na V8
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
@@ -16,9 +16,14 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Botão **Meu perfil** para abrir o perfil público do usuário logado
 - Compartilhamento de perfil público
 - Seguir perfil pela página pública
+- Notificações reais com tabela SQLite
+- Botão flutuante **Inbox** com contador de não lidas
+- Notificações de comentário, curtida, presente e seguidor
+- Marcar uma notificação como lida
+- Marcar todas como lidas
 - Vídeos vinculados ao criador logado
 - Upload permanente de vídeos para a pasta `uploads`
-- Tabelas SQLite para usuários, sessões, vídeos e comentários
+- Tabelas SQLite para usuários, sessões, vídeos, comentários e notificações
 - API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira e presentes
 - Painel admin para a conta `ghost`
 - Admin vê resumo de usuários, vídeos, comentários e moedas
@@ -31,7 +36,6 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Carteira fake com recarga demonstrativa
 - Ranking de criadores por pontuação
 - Aba Buscar com filtro por usuário, legenda, música e hashtag
-- Aba Inbox com notificações demonstrativas
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
 
@@ -50,6 +54,23 @@ Exemplo:
 ```
 
 Ao entrar logado, o botão flutuante **Meu perfil** abre seu perfil público. Dentro do perfil dá para compartilhar o link e seguir o usuário.
+
+## Notificações
+
+O botão flutuante **Inbox** mostra o contador de notificações não lidas.
+
+As notificações são geradas quando:
+
+- alguém comenta em um vídeo seu
+- alguém curte um vídeo seu
+- alguém envia presente em um vídeo seu
+- alguém segue seu perfil público
+
+Rotas:
+
+- `GET /api/notifications`
+- `POST /api/notifications/:id/read`
+- `POST /api/notifications/read-all`
 
 ## Conta demo / admin
 
@@ -72,7 +93,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V5/V6/V7 com SQLite no backend, porta `3001`
+- Express API V5/V6/V7/V8 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
@@ -98,6 +119,12 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 
 - `GET /api/public/profile/:user`
 - `POST /api/public/profile/:user/follow`
+
+### Notificações
+
+- `GET /api/notifications`
+- `POST /api/notifications/:id/read`
+- `POST /api/notifications/read-all`
 
 ### App
 
@@ -134,7 +161,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 ## Próximas melhorias
 
 - Feed por algoritmo
-- Notificações reais
 - Moderação avançada de conteúdo
 - Página de denúncia
 - Monetização real com gateway de pagamento
