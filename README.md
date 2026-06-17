@@ -2,7 +2,7 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V10
+## O que já tem na V11
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
@@ -32,10 +32,17 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Admin pode marcar denúncia como revisada
 - Admin pode dispensar denúncia
 - Admin pode remover vídeo denunciado
+- Carteira de criador
+- Botão flutuante **Carteira**
+- Cálculo de ganhos fake por presentes recebidos
+- Saldo disponível, pendente e pago
+- Pedido de saque fake com chave PIX
+- Tabela SQLite de pedidos de saque
+- Admin `ghost` pode aprovar ou recusar saques
 - Vídeos vinculados ao criador logado
 - Upload permanente de vídeos para a pasta `uploads`
-- Tabelas SQLite para usuários, sessões, vídeos, comentários, notificações e denúncias
-- API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira, presentes e moderação
+- Tabelas SQLite para usuários, sessões, vídeos, comentários, notificações, denúncias e saques
+- API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira, presentes, moderação e monetização
 - Painel admin para a conta `ghost`
 - Admin vê resumo de usuários, vídeos, comentários e moedas
 - Admin lista usuários e vídeos
@@ -49,6 +56,30 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Aba Buscar com filtro por usuário, legenda, música e hashtag
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
+
+## Carteira de criador
+
+O botão flutuante **Carteira** mostra ganhos simulados com base nos presentes recebidos nos vídeos.
+
+A carteira mostra:
+
+- saldo disponível
+- ganhos totais
+- saques pendentes
+- saques pagos
+- presentes recebidos
+- quantidade de vídeos
+
+O criador pode solicitar saque fake informando valor e chave PIX.
+
+A conta admin `ghost` pode aprovar ou recusar pedidos de saque.
+
+Rotas:
+
+- `GET /api/creator/wallet`
+- `POST /api/creator/payouts`
+- `GET /api/admin/payouts`
+- `POST /api/admin/payouts/:id/status`
 
 ## Moderação e denúncias
 
@@ -138,7 +169,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V5/V6/V7/V8/V9/V10 com SQLite no backend, porta `3001`
+- Express API V5/V6/V7/V8/V9/V10/V11 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
@@ -159,6 +190,13 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+
+### Monetização
+
+- `GET /api/creator/wallet`
+- `POST /api/creator/payouts`
+- `GET /api/admin/payouts`
+- `POST /api/admin/payouts/:id/status`
 
 ### Feed IA
 
@@ -215,6 +253,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Monetização real com gateway de pagamento
-- Saque/carteira de criador
+- Gateway real de pagamento
 - Upload em nuvem
+- Página web externa dos criadores
