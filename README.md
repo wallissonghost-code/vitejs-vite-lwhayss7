@@ -2,7 +2,7 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V6
+## O que já tem na V7
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
@@ -12,6 +12,10 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Sessão por token salvo no navegador
 - Usuários múltiplos
 - Perfil editável por usuário logado
+- Página pública de perfil por link `#/@usuario`
+- Botão **Meu perfil** para abrir o perfil público do usuário logado
+- Compartilhamento de perfil público
+- Seguir perfil pela página pública
 - Vídeos vinculados ao criador logado
 - Upload permanente de vídeos para a pasta `uploads`
 - Tabelas SQLite para usuários, sessões, vídeos e comentários
@@ -30,6 +34,22 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Aba Inbox com notificações demonstrativas
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
+
+## Perfil público
+
+Formato do link:
+
+```txt
+#/@usuario
+```
+
+Exemplo:
+
+```txt
+#/@ghost
+```
+
+Ao entrar logado, o botão flutuante **Meu perfil** abre seu perfil público. Dentro do perfil dá para compartilhar o link e seguir o usuário.
 
 ## Conta demo / admin
 
@@ -52,7 +72,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V5/V6 com SQLite no backend, porta `3001`
+- Express API V5/V6/V7 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
@@ -73,6 +93,11 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+
+### Perfil público
+
+- `GET /api/public/profile/:user`
+- `POST /api/public/profile/:user/follow`
 
 ### App
 
@@ -108,7 +133,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Página pública de perfil
 - Feed por algoritmo
 - Notificações reais
 - Moderação avançada de conteúdo
