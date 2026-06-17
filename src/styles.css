@@ -209,12 +209,12 @@ textarea {
 .action-stack {
   position: absolute;
   right: 12px;
-  bottom: 96px;
+  bottom: 82px;
   z-index: 8;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 17px;
+  gap: 13px;
 }
 
 .action-button {
@@ -223,13 +223,13 @@ textarea {
   align-items: center;
   gap: 4px;
   font-weight: 900;
-  font-size: 11px;
+  font-size: 10px;
   text-shadow: 0 2px 9px rgba(0, 0, 0, 0.8);
 }
 
 .action-button svg {
-  width: 31px;
-  height: 31px;
+  width: 29px;
+  height: 29px;
 }
 
 .action-button.active svg {
@@ -237,8 +237,8 @@ textarea {
 }
 
 .disc {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -355,6 +355,56 @@ textarea {
   font-weight: 900;
 }
 
+.ranking-card,
+.wallet-card {
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.ranking-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ranking-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 42px 42px 1fr 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+
+.ranking-row img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: white;
+}
+
+.rank-position {
+  font-weight: 950;
+  color: var(--brand-2);
+}
+
+.ranking-row strong,
+.ranking-row small {
+  display: block;
+}
+
+.ranking-row small {
+  color: var(--muted);
+  margin-top: 3px;
+}
+
 .grid-results,
 .profile-grid {
   display: grid;
@@ -446,11 +496,44 @@ textarea {
   font-size: 14px;
 }
 
+.wallet-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.wallet-card span,
+.wallet-card strong {
+  display: block;
+}
+
+.wallet-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wallet-card strong {
+  margin-top: 4px;
+  font-size: 20px;
+}
+
+.wallet-card button {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 10px 13px;
+  font-size: 12px;
+  font-weight: 950;
+}
+
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin: 24px 0 16px;
+  margin: 16px 0;
 }
 
 .profile-stats div {
@@ -471,16 +554,31 @@ textarea {
   font-weight: 800;
 }
 
-.primary-wide {
+.profile-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.primary-wide,
+.secondary-wide {
   width: 100%;
   min-height: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--brand), #ff7a00);
   border-radius: 17px;
   font-weight: 950;
+}
+
+.primary-wide {
+  background: linear-gradient(135deg, var(--brand), #ff7a00);
+}
+
+.secondary-wide {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.13);
 }
 
 .profile-grid {
@@ -507,6 +605,8 @@ textarea {
 .modal-card {
   width: 100%;
   max-width: 420px;
+  max-height: 92vh;
+  overflow-y: auto;
   position: relative;
   background: linear-gradient(180deg, #181820, #0d0d12);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -551,6 +651,60 @@ textarea {
 .modal-card input,
 .modal-card textarea {
   margin-bottom: 10px;
+}
+
+.file-picker {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  margin-bottom: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.file-picker input {
+  display: none;
+}
+
+.upload-preview {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 18px;
+  background: #000;
+  margin-bottom: 10px;
+}
+
+.gift-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.gift-grid button {
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+}
+
+.gift-grid span {
+  font-size: 30px;
+}
+
+.gift-grid small {
+  color: var(--muted);
 }
 
 .comment-drawer {
