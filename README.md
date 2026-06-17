@@ -2,7 +2,7 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V5
+## O que já tem na V6
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
@@ -16,6 +16,11 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Upload permanente de vídeos para a pasta `uploads`
 - Tabelas SQLite para usuários, sessões, vídeos e comentários
 - API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira e presentes
+- Painel admin para a conta `ghost`
+- Admin vê resumo de usuários, vídeos, comentários e moedas
+- Admin lista usuários e vídeos
+- Admin adiciona/remove moedas de usuários
+- Admin apaga vídeos
 - Vídeos com autoplay, legenda, música e hashtags
 - Curtir, salvar, comentar, compartilhar e seguir
 - Presentes/moedas nos vídeos
@@ -26,12 +31,14 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
 
-## Conta demo
+## Conta demo / admin
 
 ```txt
 usuário: ghost
 senha: 123456
 ```
+
+Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel administrativo.
 
 Também é possível criar novas contas pela tela de cadastro.
 
@@ -45,7 +52,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V5 com SQLite no backend, porta `3001`
+- Express API V5/V6 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
@@ -83,6 +90,14 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 - `POST /api/wallet/recharge`
 - `GET /api/ranking`
 
+### Admin
+
+- `GET /api/admin/summary`
+- `GET /api/admin/users`
+- `GET /api/admin/videos`
+- `POST /api/admin/users/:id/coins`
+- `DELETE /api/admin/videos/:id`
+
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
@@ -96,6 +111,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 - Página pública de perfil
 - Feed por algoritmo
 - Notificações reais
-- Moderação de conteúdo
-- Painel admin
+- Moderação avançada de conteúdo
+- Página de denúncia
 - Monetização real com gateway de pagamento
