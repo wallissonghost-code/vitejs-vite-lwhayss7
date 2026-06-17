@@ -25,6 +25,15 @@ import {
   X
 } from "lucide-react";
 
+type CommentItem = {
+  id: number;
+  user: string;
+  name: string;
+  avatar: string;
+  text: string;
+  createdAt: string;
+};
+
 type VideoPost = {
   id: number;
   user: string;
@@ -40,6 +49,7 @@ type VideoPost = {
   gifts: number;
   verified: boolean;
   following: boolean;
+  commentList: CommentItem[];
 };
 
 type CreatorProfile = {
@@ -60,6 +70,8 @@ type GiftOption = {
   coins: number;
 };
 
+const API = "/api";
+
 const gifts: GiftOption[] = [
   { id: "rose", name: "Rosa", emoji: "🌹", coins: 5 },
   { id: "fire", name: "Fogo", emoji: "🔥", coins: 15 },
@@ -67,63 +79,7 @@ const gifts: GiftOption[] = [
   { id: "diamond", name: "Diamante", emoji: "💎", coins: 100 }
 ];
 
-const seedVideos: VideoPost[] = [
-  {
-    id: 1,
-    user: "gxst.vibes",
-    name: "GXST Vibes Oficial",
-    avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=gxst",
-    videoUrl:
-      "https://videos.pexels.com/video-files/853789/853789-hd_720_1280_25fps.mp4",
-    caption: "Bem-vindo ao GXST Vibes: vídeos curtos, trends, ranking e criadores em destaque. #gxst #viral",
-    music: "Som original - GXST Vibes",
-    tags: ["gxst", "viral", "shorts"],
-    likes: 12890,
-    comments: 342,
-    shares: 118,
-    gifts: 740,
-    verified: true,
-    following: false
-  },
-  {
-    id: 2,
-    user: "modelo.fx",
-    name: "Modelo FX",
-    avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=modelofx",
-    videoUrl:
-      "https://videos.pexels.com/video-files/2792370/2792370-hd_720_1280_30fps.mp4",
-    caption: "Ensaio premium com estética urbana para capa digital. #modelo #fx",
-    music: "Trend premium - FX Studio",
-    tags: ["modelo", "fx", "capa"],
-    likes: 8420,
-    comments: 219,
-    shares: 77,
-    gifts: 320,
-    verified: false,
-    following: true
-  },
-  {
-    id: 3,
-    user: "ghost.creator",
-    name: "Ghost Creator",
-    avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=ghostcreator",
-    videoUrl:
-      "https://videos.pexels.com/video-files/3571264/3571264-hd_720_1280_30fps.mp4",
-    caption: "Criador em destaque da semana. Poste, cresça e entre no ranking. #creator #ranking",
-    music: "Beat exclusivo - Ghost",
-    tags: ["creator", "ranking", "vibes"],
-    likes: 3960,
-    comments: 144,
-    shares: 61,
-    gifts: 190,
-    verified: true,
-    following: false
-  }
-];
-
-const sampleVideoUrls = seedVideos.map((video) => video.videoUrl);
-
-const defaultUser: CreatorProfile = {
+const defaultProfile: CreatorProfile = {
   user: "meu.perfil",
   name: "Meu Perfil",
   bio: "Creator GXST Vibes • vídeos curtos, trends, capas e divulgação.",
@@ -132,69 +88,39 @@ const defaultUser: CreatorProfile = {
   followers: 1500
 };
 
-function loadVideos() {
-  try {
-    const saved = localStorage.getItem("gxst-videos");
-    if (!saved) return seedVideos;
-    const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) && parsed.length ? parsed : seedVideos;
-  } catch {
-    return seedVideos;
+async function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.error || "Erro na API do GXST Vibes.");
   }
-}
-
-function loadRecord<T>(key: string, fallback: T): T {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : fallback;
-  } catch {
-    return fallback;
-  }
+  return data as T;
 }
 
 export default function App() {
-  const [videos, setVideos] = useState<VideoPost[]>(loadVideos);
-  const [profile, setProfile] = useState<CreatorProfile>(() =>
-    loadRecord("gxst-profile", defaultUser)
-  );
+  const [videos, setVideos] = useState<VideoPost[]>([]);
+  const [profile, setProfile] = useState<CreatorProfile>(defaultProfile);
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [feedMode, setFeedMode] = useState<"following" | "foryou">("foryou");
-  const [liked, setLiked] = useState<Record<number, boolean>>(() =>
-    loadRecord("gxst-liked", {})
-  );
-  const [saved, setSaved] = useState<Record<number, boolean>>(() =>
-    loadRecord("gxst-saved", {})
-  );
+  const [liked, setLiked] = useState<Record<number, boolean>>(() => loadRecord("gxst-liked", {}));
+  const [saved, setSaved] = useState<Record<number, boolean>>(() => loadRecord("gxst-saved", {}));
   const [query, setQuery] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [giftVideo, setGiftVideo] = useState<VideoPost | null>(null);
   const [commentVideo, setCommentVideo] = useState<VideoPost | null>(null);
-  const [comments, setComments] = useState<Record<number, string[]>>(() =>
-    loadRecord("gxst-comments", {})
-  );
   const [commentText, setCommentText] = useState("");
   const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
-    creator: defaultUser.name,
-    user: defaultUser.user,
+    creator: defaultProfile.name,
+    user: defaultProfile.user,
     caption: "",
     music: "Som original - Meu Perfil",
     videoUrl: ""
   });
-
-  useEffect(() => {
-    const persistable = videos.map((video) =>
-      video.videoUrl.startsWith("blob:")
-        ? { ...video, videoUrl: sampleVideoUrls[0] }
-        : video
-    );
-    localStorage.setItem("gxst-videos", JSON.stringify(persistable));
-  }, [videos]);
-
-  useEffect(() => {
-    localStorage.setItem("gxst-profile", JSON.stringify(profile));
-  }, [profile]);
 
   useEffect(() => {
     localStorage.setItem("gxst-liked", JSON.stringify(liked));
@@ -205,12 +131,35 @@ export default function App() {
   }, [saved]);
 
   useEffect(() => {
-    localStorage.setItem("gxst-comments", JSON.stringify(comments));
-  }, [comments]);
-
-  useEffect(() => {
     setForm((current) => ({ ...current, creator: profile.name, user: profile.user }));
   }, [profile.name, profile.user]);
+
+  useEffect(() => {
+    loadAppData();
+  }, []);
+
+  async function loadAppData() {
+    setLoading(true);
+    setError("");
+    try {
+      const [apiVideos, apiProfile] = await Promise.all([
+        apiJson<VideoPost[]>(`${API}/videos`),
+        apiJson<CreatorProfile>(`${API}/profile`)
+      ]);
+      setVideos(apiVideos);
+      setProfile(apiProfile);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Erro ao carregar app.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function replaceVideo(updated: VideoPost) {
+    setVideos((current) => current.map((video) => (video.id === updated.id ? updated : video)));
+    setCommentVideo((current) => (current?.id === updated.id ? updated : current));
+    setGiftVideo((current) => (current?.id === updated.id ? updated : current));
+  }
 
   const visibleVideos = useMemo(() => {
     if (feedMode === "following") {
@@ -224,13 +173,7 @@ export default function App() {
     const text = query.trim().toLowerCase();
     if (!text) return videos;
     return videos.filter((video) => {
-      const searchable = [
-        video.user,
-        video.name,
-        video.caption,
-        video.music,
-        ...video.tags
-      ]
+      const searchable = [video.user, video.name, video.caption, video.music, ...video.tags]
         .join(" ")
         .toLowerCase();
       return searchable.includes(text);
@@ -238,16 +181,14 @@ export default function App() {
   }, [query, videos]);
 
   const ranking = useMemo(() => {
-    return [...videos]
-      .sort((a, b) => scoreVideo(b) - scoreVideo(a))
-      .slice(0, 5);
+    return [...videos].sort((a, b) => scoreVideo(b) - scoreVideo(a)).slice(0, 5);
   }, [videos]);
 
   const myVideos = videos.filter((video) => video.user === profile.user);
   const totalLikes = myVideos.reduce((sum, video) => sum + video.likes, 0);
   const totalGifts = myVideos.reduce((sum, video) => sum + video.gifts, 0);
 
-  function toggleLike(id: number) {
+  async function toggleLike(id: number) {
     const nextLiked = !liked[id];
     setLiked((current) => ({ ...current, [id]: nextLiked }));
     setVideos((current) =>
@@ -257,32 +198,44 @@ export default function App() {
           : video
       )
     );
+
+    try {
+      const updated = await apiJson<VideoPost>(`${API}/videos/${id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ liked: nextLiked })
+      });
+      replaceVideo(updated);
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao curtir.");
+    }
   }
 
   function toggleSave(id: number) {
     setSaved((current) => ({ ...current, [id]: !current[id] }));
   }
 
-  function toggleFollow(id: number) {
-    setVideos((current) =>
-      current.map((video) =>
-        video.id === id ? { ...video, following: !video.following } : video
-      )
-    );
+  async function toggleFollow(id: number) {
+    try {
+      const updated = await apiJson<VideoPost>(`${API}/videos/${id}/follow`, { method: "POST" });
+      replaceVideo(updated);
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao seguir.");
+    }
   }
 
   async function shareVideo(video: VideoPost) {
-    setVideos((current) =>
-      current.map((item) =>
-        item.id === video.id ? { ...item, shares: item.shares + 1 } : item
-      )
-    );
+    try {
+      const updated = await apiJson<VideoPost>(`${API}/videos/${video.id}/share`, { method: "POST" });
+      replaceVideo(updated);
+    } catch {
+      return;
+    }
 
     const text = `Olha esse vídeo do @${video.user} no GXST Vibes: ${video.caption}`;
     try {
-      if (navigator.share) {
-        await navigator.share({ title: "GXST Vibes", text });
-      } else {
+      if (navigator.share) await navigator.share({ title: "GXST Vibes", text });
+      else {
         await navigator.clipboard.writeText(text);
         alert("Texto copiado para compartilhar.");
       }
@@ -291,93 +244,119 @@ export default function App() {
     }
   }
 
-  function publishVideo() {
+  async function publishVideo() {
     const caption = form.caption.trim();
     if (!caption) {
       alert("Escreva uma legenda para publicar.");
       return;
     }
 
-    const videoUrl =
-      selectedVideoUrl ||
-      form.videoUrl.trim() ||
-      sampleVideoUrls[Math.floor(Math.random() * sampleVideoUrls.length)];
+    const body = new FormData();
+    body.append("creator", form.creator);
+    body.append("user", form.user);
+    body.append("caption", caption);
+    body.append("music", form.music);
+    body.append("videoUrl", form.videoUrl);
+    if (selectedVideoFile) body.append("video", selectedVideoFile);
 
-    const cleanUser = form.user.trim().replace("@", "") || profile.user;
-    const nextVideo: VideoPost = {
-      id: Date.now(),
-      user: cleanUser,
-      name: form.creator.trim() || profile.name,
-      avatar: `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(cleanUser)}`,
-      videoUrl,
-      caption,
-      music: form.music.trim() || "Som original - Meu Perfil",
-      tags: extractTags(caption),
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      gifts: 0,
-      verified: false,
-      following: false
-    };
-
-    setVideos((current) => [nextVideo, ...current]);
-    setForm({
-      creator: profile.name,
-      user: profile.user,
-      caption: "",
-      music: "Som original - Meu Perfil",
-      videoUrl: ""
-    });
-    setSelectedVideoUrl("");
-    setUploadOpen(false);
-    setActiveTab("home");
-    setFeedMode("foryou");
-  }
-
-  function addComment() {
-    if (!commentVideo || !commentText.trim()) return;
-    const text = commentText.trim();
-    setComments((current) => ({
-      ...current,
-      [commentVideo.id]: [text, ...(current[commentVideo.id] || [])]
-    }));
-    setVideos((current) =>
-      current.map((video) =>
-        video.id === commentVideo.id ? { ...video, comments: video.comments + 1 } : video
-      )
-    );
-    setCommentText("");
-  }
-
-  function sendGift(gift: GiftOption) {
-    if (!giftVideo) return;
-    if (profile.coins < gift.coins) {
-      alert("Você não tem moedas suficientes. Use o botão de recarga fake na carteira.");
-      return;
+    try {
+      const created = await apiJson<VideoPost>(`${API}/videos`, {
+        method: "POST",
+        body
+      });
+      setVideos((current) => [created, ...current]);
+      setForm({
+        creator: profile.name,
+        user: profile.user,
+        caption: "",
+        music: "Som original - Meu Perfil",
+        videoUrl: ""
+      });
+      setSelectedVideoUrl("");
+      setSelectedVideoFile(null);
+      setUploadOpen(false);
+      setActiveTab("home");
+      setFeedMode("foryou");
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao publicar vídeo.");
     }
-
-    setProfile((current) => ({ ...current, coins: current.coins - gift.coins }));
-    setVideos((current) =>
-      current.map((video) =>
-        video.id === giftVideo.id
-          ? { ...video, gifts: video.gifts + gift.coins, likes: video.likes + 1 }
-          : video
-      )
-    );
-    setGiftVideo(null);
   }
 
-  function saveProfile() {
-    const cleanUser = profile.user.trim().replace("@", "") || "meu.perfil";
-    setProfile((current) => ({
-      ...current,
-      user: cleanUser,
-      name: current.name.trim() || "Meu Perfil",
-      bio: current.bio.trim() || defaultUser.bio,
-      avatar: `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(cleanUser)}`
-    }));
-    setEditProfileOpen(false);
+  async function addComment() {
+    if (!commentVideo || !commentText.trim()) return;
+    try {
+      const response = await apiJson<{ video: VideoPost; comment: CommentItem }>(
+        `${API}/videos/${commentVideo.id}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: commentText.trim() })
+        }
+      );
+      replaceVideo(response.video);
+      setCommentText("");
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao comentar.");
+    }
+  }
+
+  async function sendGift(gift: GiftOption) {
+    if (!giftVideo) return;
+    try {
+      const response = await apiJson<{ profile: CreatorProfile; video: VideoPost }>(
+        `${API}/videos/${giftVideo.id}/gift`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ giftId: gift.id })
+        }
+      );
+      setProfile(response.profile);
+      replaceVideo(response.video);
+      setGiftVideo(null);
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao enviar presente.");
+    }
+  }
+
+  async function rechargeWallet() {
+    try {
+      const updated = await apiJson<CreatorProfile>(`${API}/wallet/recharge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 100 })
+      });
+      setProfile(updated);
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao recarregar carteira.");
+    }
+  }
+
+  async function saveProfile() {
+    try {
+      const cleanProfile = {
+        ...profile,
+        user: profile.user.trim().replace("@", "") || "meu.perfil",
+        name: profile.name.trim() || "Meu Perfil",
+        bio: profile.bio.trim() || defaultProfile.bio
+      };
+      const updated = await apiJson<CreatorProfile>(`${API}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cleanProfile)
+      });
+      setProfile(updated);
+      setEditProfileOpen(false);
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao salvar perfil.");
+    }
+  }
+
+  function handleVideoFile(file: File | undefined) {
+    if (!file) return;
+    if (selectedVideoUrl.startsWith("blob:")) URL.revokeObjectURL(selectedVideoUrl);
+    setSelectedVideoFile(file);
+    setSelectedVideoUrl(URL.createObjectURL(file));
   }
 
   return (
@@ -403,7 +382,24 @@ export default function App() {
         </button>
       </header>
 
-      {activeTab === "home" && (
+      {loading && (
+        <section className="page center-page">
+          <h1>Carregando GXST Vibes...</h1>
+          <p>Conectando ao backend.</p>
+        </section>
+      )}
+
+      {!loading && error && (
+        <section className="page center-page">
+          <h1>Backend não respondeu</h1>
+          <p>{error}</p>
+          <button className="primary-wide" onClick={loadAppData}>
+            Tentar novamente
+          </button>
+        </section>
+      )}
+
+      {!loading && !error && activeTab === "home" && (
         <main className="feed">
           {visibleVideos.map((video) => (
             <VideoCard
@@ -422,7 +418,7 @@ export default function App() {
         </main>
       )}
 
-      {activeTab === "search" && (
+      {!loading && !error && activeTab === "search" && (
         <section className="page search-page">
           <div className="page-header">
             <div>
@@ -493,7 +489,7 @@ export default function App() {
         </section>
       )}
 
-      {activeTab === "inbox" && (
+      {!loading && !error && activeTab === "inbox" && (
         <section className="page inbox-page">
           <div className="page-header">
             <div>
@@ -505,11 +501,11 @@ export default function App() {
 
           <Notification icon={<Heart />} title="Curtidas chegando" text="Seus vídeos somam novas curtidas no ranking." />
           <Notification icon={<Gift />} title="Presentes ativados" text="Criadores agora podem receber rosas, coroas e diamantes." />
-          <Notification icon={<TrendingUp />} title="Trend em alta" text="A hashtag #gxst está crescendo hoje." />
+          <Notification icon={<TrendingUp />} title="Backend conectado" text="Agora vídeos, comentários, perfil e moedas usam API real." />
         </section>
       )}
 
-      {activeTab === "profile" && (
+      {!loading && !error && activeTab === "profile" && (
         <section className="page profile-page">
           <div className="profile-cover"></div>
           <img className="profile-avatar" src={profile.avatar} alt={profile.name} />
@@ -521,9 +517,7 @@ export default function App() {
               <span>Carteira</span>
               <strong>{profile.coins} moedas</strong>
             </div>
-            <button onClick={() => setProfile((current) => ({ ...current, coins: current.coins + 100 }))}>
-              +100 fake
-            </button>
+            <button onClick={rechargeWallet}>+100 fake</button>
           </div>
 
           <div className="profile-stats">
@@ -580,19 +574,15 @@ export default function App() {
               <UploadCloud />
             </div>
             <h2>Publicar vídeo</h2>
-            <p>Escolha um vídeo do aparelho ou cole uma URL .mp4. Sem vídeo, o app usa um exemplo.</p>
+            <p>Escolha um vídeo do aparelho ou cole uma URL .mp4. O arquivo vai para a pasta uploads.</p>
 
             <label className="file-picker">
               <UploadCloud size={19} />
-              <span>{selectedVideoUrl ? "Vídeo selecionado" : "Selecionar vídeo do aparelho"}</span>
+              <span>{selectedVideoFile ? selectedVideoFile.name : "Selecionar vídeo do aparelho"}</span>
               <input
                 type="file"
                 accept="video/*"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (!file) return;
-                  setSelectedVideoUrl(URL.createObjectURL(file));
-                }}
+                onChange={(event) => handleVideoFile(event.target.files?.[0])}
               />
             </label>
 
@@ -642,7 +632,7 @@ export default function App() {
               <Crown />
             </div>
             <h2>Editar perfil</h2>
-            <p>Essas informações ficam salvas no navegador enquanto a V2 não tem banco de dados.</p>
+            <p>Essas informações agora são salvas no backend JSON do projeto.</p>
             <input
               placeholder="Nome"
               value={profile.name}
@@ -702,15 +692,15 @@ export default function App() {
           </div>
 
           <div className="comment-list">
-            {(comments[commentVideo.id] || []).length === 0 && (
+            {commentVideo.commentList.length === 0 && (
               <p className="empty-text">Seja o primeiro a comentar nesse vídeo.</p>
             )}
-            {(comments[commentVideo.id] || []).map((comment, index) => (
-              <div className="comment-item" key={`${comment}-${index}`}>
-                <img src={`https://api.dicebear.com/8.x/avataaars/svg?seed=${index}`} alt="Comentário" />
+            {commentVideo.commentList.map((comment) => (
+              <div className="comment-item" key={comment.id}>
+                <img src={comment.avatar} alt={comment.name} />
                 <div>
-                  <strong>@usuario{index + 1}</strong>
-                  <p>{comment}</p>
+                  <strong>@{comment.user}</strong>
+                  <p>{comment.text}</p>
                 </div>
               </div>
             ))}
@@ -853,10 +843,13 @@ function Notification({ icon, title, text }: { icon: ReactNode; title: string; t
   );
 }
 
-function extractTags(text: string) {
-  const found = text.match(/#[a-zA-Z0-9_À-ÿ]+/g) || [];
-  const tags = found.map((tag) => tag.replace("#", "").toLowerCase());
-  return tags.length ? tags.slice(0, 4) : ["gxst", "vibes"];
+function loadRecord<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function scoreVideo(video: VideoPost) {
