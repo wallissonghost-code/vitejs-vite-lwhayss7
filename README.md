@@ -2,15 +2,17 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V12
+## O que já tem na V13
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
-- Servidor principal atualizado para `server/v12.js`
-- Upload preparado para produção
+- Servidor principal atualizado para `server/v13.js`
+- Storage real com suporte a Supabase Storage
+- Upload local como fallback automático
 - Upload com nome limpo e extensão preservada
-- Configuração de upload por variáveis de ambiente
-- Suporte a URL pública/CDN com `PUBLIC_UPLOAD_BASE_URL`
+- Configuração de storage por variáveis de ambiente
+- Suporte a `STORAGE_DRIVER=local` ou `STORAGE_DRIVER=supabase`
+- Suporte a bucket/folder do Supabase
 - Health check com dados de storage em `GET /api/health`
 - Banco SQLite real usando `better-sqlite3`
 - Login e cadastro com usuário/senha
@@ -46,7 +48,6 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Tabela SQLite de pedidos de saque
 - Admin `ghost` pode aprovar ou recusar saques
 - Vídeos vinculados ao criador logado
-- Upload permanente de vídeos para a pasta `uploads`
 - Tabelas SQLite para usuários, sessões, vídeos, comentários, notificações, denúncias e saques
 - API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira, presentes, moderação e monetização
 - Painel admin para a conta `ghost`
@@ -58,11 +59,33 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
 
+## Storage Supabase
+
+A V13 usa `server/storageProvider.js`.
+
+Sem configurar nada, o app usa storage local:
+
+```txt
+STORAGE_DRIVER=local
+```
+
+Para usar Supabase Storage, configure no Replit Secrets ou servidor:
+
+| Variável | Exemplo |
+|---|---|
+| `STORAGE_DRIVER` | `supabase` |
+| `SUPABASE_URL` | `https://seuprojeto.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | chave service role |
+| `SUPABASE_BUCKET` | `gxst-videos` |
+| `SUPABASE_FOLDER` | `videos` |
+| `MAX_UPLOAD_MB` | `200` |
+| `PUBLIC_UPLOAD_BASE_URL` | opcional, CDN/domínio próprio |
+
+Documentação completa: `docs/STORAGE_SUPABASE.md`.
+
 ## Produção e upload
 
-A V12 usa `server/uploadStorage.js` para controlar os uploads.
-
-Principais variáveis de ambiente:
+Variáveis gerais:
 
 | Variável | Função | Padrão |
 |---|---|---|
@@ -75,7 +98,7 @@ Principais variáveis de ambiente:
 | `PUBLIC_UPLOAD_BASE_URL` | URL pública/CDN dos uploads | vazio |
 | `JSON_LIMIT` | Limite do body JSON | `10mb` |
 
-Documentação completa: `docs/PRODUCAO.md`.
+Documentação de produção: `docs/PRODUCAO.md`.
 
 ## Rodar no Replit
 
@@ -87,7 +110,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V12 com SQLite no backend, porta `3001`
+- Express API V13 com SQLite no backend, porta `3001`
 
 ## Rodar em produção
 
@@ -99,17 +122,16 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V12
-npm run server     # apenas backend V12
-npm run server:v12 # apenas backend V12
-npm run server:v5  # backend antigo V5, backup
+npm run dev        # frontend + backend V13
+npm run server     # apenas backend V13
+npm run server:v13 # apenas backend V13
+npm run server:v12 # backend V12 backup
+npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
 npm run client     # apenas frontend
 ```
 
 ## Carteira de criador
-
-O botão flutuante **Carteira** mostra ganhos simulados com base nos presentes recebidos nos vídeos.
 
 Rotas:
 
@@ -120,8 +142,6 @@ Rotas:
 
 ## Moderação e denúncias
 
-O botão flutuante **Denunciar** permite escolher um vídeo, selecionar o motivo e enviar detalhes opcionais.
-
 Rotas:
 
 - `POST /api/videos/:id/report`
@@ -129,8 +149,6 @@ Rotas:
 - `POST /api/admin/reports/:id/status`
 
 ## Feed IA
-
-O botão flutuante **Feed IA** abre recomendações ordenadas por algoritmo.
 
 Rota:
 
@@ -204,12 +222,13 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 
 - Banco SQLite: `server/data/gxst.sqlite`
 - Arquivos auxiliares do SQLite: `server/data/gxst.sqlite-wal` e `server/data/gxst.sqlite-shm`
-- Vídeos enviados: `uploads/`
+- Upload local: `uploads/`
+- Upload Supabase: bucket configurado em `SUPABASE_BUCKET`
 
 Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
 - Gateway real de pagamento
-- Storage real S3/Cloudinary/Supabase
 - Página web externa dos criadores
+- Conversão automática de vídeo para formato leve
