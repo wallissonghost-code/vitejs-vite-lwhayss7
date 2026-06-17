@@ -4,9 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite --host 0.0.0.0\" \"node server/index.js\"",
+    "client": "vite --host 0.0.0.0",
+    "server": "node server/index.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "start": "node server/index.js",
+    "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -14,6 +17,10 @@
     "typescript": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest"
+    "lucide-react": "latest",
+    "express": "latest",
+    "cors": "latest",
+    "multer": "latest",
+    "concurrently": "latest"
   }
 }
