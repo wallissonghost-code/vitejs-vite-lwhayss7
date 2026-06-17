@@ -1,5 +1,13 @@
-import { requireAuth } from "./auth.js";
 import { getUserById, publicUser, rowToVideo, sqlite } from "./sqliteStore.js";
+
+function makeRequireAuth(getAuthUser) {
+  return function requireAuth(req, res, next) {
+    const user = getAuthUser(req);
+    if (!user) return res.status(401).json({ error: "Faça login para continuar." });
+    req.user = user;
+    next();
+  };
+}
 
 function requireAdmin(req, res, next) {
   if (req.user?.user !== "ghost") return res.status(403).json({ error: "Acesso admin permitido apenas para @ghost." });
@@ -41,8 +49,9 @@ function reportPayload(row) {
   };
 }
 
-export function registerModerationRoutes(app) {
+export function registerModerationRoutes(app, getAuthUser) {
   initModerationStore();
+  const requireAuth = makeRequireAuth(getAuthUser);
 
   app.post("/api/videos/:id/report", requireAuth, (req, res) => {
     const videoId = Number(req.params.id);
