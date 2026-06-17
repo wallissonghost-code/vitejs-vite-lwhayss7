@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Coins, RefreshCw, Shield, Trash2, Users, Video } from "lucide-react";
 
@@ -146,7 +147,7 @@ export function AdminPanel({ token, onVideosChanged }: { token: string; onVideos
   );
 }
 
-function AdminStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function AdminStat({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
   return (
     <div className="admin-stat">
       {icon}
