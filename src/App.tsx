@@ -5,7 +5,6 @@ import {
   Bookmark,
   CheckCircle2,
   ChevronRight,
-  Coins,
   Crown,
   Flame,
   Gift,
@@ -23,7 +22,6 @@ import {
   Trophy,
   UploadCloud,
   User,
-  Wallet,
   X
 } from "lucide-react";
 
