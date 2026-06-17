@@ -19,3 +19,109 @@
   color: var(--muted);
   line-height: 1.45;
 }
+
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 0, 92, 0.28), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(0, 240, 255, 0.2), transparent 32%),
+    #050505;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.045));
+  padding: 26px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.auth-logo {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  margin-bottom: 16px;
+  font-size: 25px;
+  font-weight: 1000;
+  background: linear-gradient(135deg, var(--brand-2), var(--brand));
+}
+
+.auth-card h1 {
+  margin: 4px 0 6px;
+  font-size: 31px;
+  letter-spacing: -0.04em;
+}
+
+.auth-card p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 5px;
+  margin-bottom: 14px;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-tabs button {
+  min-height: 42px;
+  border-radius: 13px;
+  font-weight: 950;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.auth-tabs button.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.auth-card input {
+  margin-bottom: 10px;
+}
+
+.auth-card small {
+  display: block;
+  margin-top: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.auth-error {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: #fff;
+  background: rgba(255, 0, 92, 0.22);
+  border: 1px solid rgba(255, 0, 92, 0.34);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.logout-button {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.84);
+  font-weight: 900;
+}
