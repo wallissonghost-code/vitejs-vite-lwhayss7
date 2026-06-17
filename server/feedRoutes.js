@@ -1,7 +1,8 @@
 import { registerModerationRoutes } from "./moderationRoutes.js";
+import { registerMonetizationRoutes } from "./monetizationRoutes.js";
 import { fromJson, rowToVideo, scoreVideo, sqlite } from "./sqliteStore.js";
 
-let moderationRegistered = false;
+let extraRoutesRegistered = false;
 
 function daysSince(value) {
   const date = new Date(value || Date.now());
@@ -69,9 +70,10 @@ function algorithmScore(row, viewer, interests) {
 }
 
 export function registerFeedRoutes(app, getAuthUser) {
-  if (!moderationRegistered) {
-    registerModerationRoutes(app);
-    moderationRegistered = true;
+  if (!extraRoutesRegistered) {
+    registerModerationRoutes(app, getAuthUser);
+    registerMonetizationRoutes(app, getAuthUser);
+    extraRoutesRegistered = true;
   }
 
   app.get("/api/feed/recommended", (req, res) => {
