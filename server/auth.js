@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { registerFeedRoutes } from "./feedRoutes.js";
 import {
   getUserById,
   getUserByUsername,
@@ -145,6 +146,7 @@ function publicProfilePayload(username, viewer = null) {
 
 export function registerAuthRoutes(app) {
   initNotificationStore();
+  registerFeedRoutes(app, getAuthUser);
 
   app.post("/api/auth/register", (req, res) => {
     const userName = normalizeUser(req.body.user);
