@@ -1,10 +1,14 @@
 # GXST Vibes
 
-App de vídeos curtos estilo feed vertical, criado em React + Vite.
+App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express.
 
-## O que já tem na V2
+## O que já tem na V3
 
-- Feed vertical com rolagem tela cheia
+- Frontend React com feed vertical estilo vídeos curtos
+- Backend Node/Express com API real
+- Banco de dados simples em JSON local
+- Upload permanente de vídeos para a pasta `uploads`
+- API de vídeos, perfil, comentários, seguir, compartilhar, ranking, carteira e presentes
 - Vídeos com autoplay, legenda, música e hashtags
 - Curtir, salvar, comentar, compartilhar e seguir
 - Presentes/moedas nos vídeos
@@ -15,7 +19,6 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite.
 - Perfil editável com nome, usuário e bio
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
-- Dados salvos no `localStorage` do navegador
 
 ## Rodar no Replit
 
@@ -24,20 +27,41 @@ npm install
 npm run dev
 ```
 
-Depois abra a URL gerada pelo Replit.
+O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
-## Observações da V2
+- Vite/React no frontend
+- Express API no backend, porta `3001`
 
-O upload local funciona como demonstração no navegador. Para upload real e permanente, a próxima etapa precisa de backend + storage.
+O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
+
+## API principal
+
+- `GET /api/health`
+- `GET /api/videos`
+- `POST /api/videos`
+- `GET /api/profile`
+- `PUT /api/profile`
+- `POST /api/videos/:id/like`
+- `POST /api/videos/:id/follow`
+- `POST /api/videos/:id/share`
+- `POST /api/videos/:id/comments`
+- `POST /api/videos/:id/gift`
+- `POST /api/wallet/recharge`
+- `GET /api/ranking`
+
+## Onde os dados ficam
+
+- Banco JSON: `server/data/db.json`
+- Vídeos enviados: `uploads/`
+
+Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Backend com Node/Express
 - Login e cadastro reais
-- Banco de dados PostgreSQL ou SQLite
-- Upload real com storage
-- Perfil público por usuário
-- Comentários reais por usuário
-- Sistema de seguidores persistente
-- Ranking global no banco
-- Moedas, presentes e monetização real
+- Trocar JSON por PostgreSQL ou SQLite
+- Sessão/autenticação por usuário
+- Página pública de perfil
+- Feed por algoritmo
+- Moderação de conteúdo
+- Monetização real com gateway de pagamento
