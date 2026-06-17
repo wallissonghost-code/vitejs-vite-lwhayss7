@@ -2,7 +2,7 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V9
+## O que já tem na V10
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
@@ -25,10 +25,17 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Notificações de comentário, curtida, presente e seguidor
 - Marcar uma notificação como lida
 - Marcar todas como lidas
+- Sistema de denúncia de vídeos
+- Botão flutuante **Denunciar**
+- Tabela SQLite de denúncias
+- Painel admin de denúncias para a conta `ghost`
+- Admin pode marcar denúncia como revisada
+- Admin pode dispensar denúncia
+- Admin pode remover vídeo denunciado
 - Vídeos vinculados ao criador logado
 - Upload permanente de vídeos para a pasta `uploads`
-- Tabelas SQLite para usuários, sessões, vídeos, comentários e notificações
-- API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira e presentes
+- Tabelas SQLite para usuários, sessões, vídeos, comentários, notificações e denúncias
+- API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira, presentes e moderação
 - Painel admin para a conta `ghost`
 - Admin vê resumo de usuários, vídeos, comentários e moedas
 - Admin lista usuários e vídeos
@@ -42,6 +49,22 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Aba Buscar com filtro por usuário, legenda, música e hashtag
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
+
+## Moderação e denúncias
+
+O botão flutuante **Denunciar** permite escolher um vídeo, selecionar o motivo e enviar detalhes opcionais.
+
+A conta admin `ghost` vê a lista de denúncias no mesmo painel e pode:
+
+- marcar como revisada
+- dispensar
+- remover o vídeo denunciado
+
+Rotas:
+
+- `POST /api/videos/:id/report`
+- `GET /api/admin/reports`
+- `POST /api/admin/reports/:id/status`
 
 ## Feed IA
 
@@ -115,7 +138,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V5/V6/V7/V8/V9 com SQLite no backend, porta `3001`
+- Express API V5/V6/V7/V8/V9/V10 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
@@ -152,6 +175,12 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 - `POST /api/notifications/:id/read`
 - `POST /api/notifications/read-all`
 
+### Moderação
+
+- `POST /api/videos/:id/report`
+- `GET /api/admin/reports`
+- `POST /api/admin/reports/:id/status`
+
 ### App
 
 - `GET /api/health`
@@ -186,6 +215,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Moderação avançada de conteúdo
-- Página de denúncia
 - Monetização real com gateway de pagamento
+- Saque/carteira de criador
+- Upload em nuvem
