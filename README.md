@@ -1,18 +1,20 @@
 # GXST Vibes
 
-App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express.
+App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V4
+## O que já tem na V5
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
+- Banco SQLite real usando `better-sqlite3`
 - Login e cadastro com usuário/senha
+- Senhas protegidas com `bcryptjs`
 - Sessão por token salvo no navegador
 - Usuários múltiplos
 - Perfil editável por usuário logado
 - Vídeos vinculados ao criador logado
-- Banco de dados simples em JSON local
 - Upload permanente de vídeos para a pasta `uploads`
+- Tabelas SQLite para usuários, sessões, vídeos e comentários
 - API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira e presentes
 - Vídeos com autoplay, legenda, música e hashtags
 - Curtir, salvar, comentar, compartilhar e seguir
@@ -43,9 +45,18 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API no backend, porta `3001`
+- Express API V5 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
+
+## Scripts úteis
+
+```bash
+npm run dev       # frontend + backend SQLite
+npm run server    # apenas backend SQLite
+npm run client    # apenas frontend
+npm run server:json # backend antigo em JSON, caso precise voltar
+```
 
 ## API principal
 
@@ -74,17 +85,17 @@ O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
 ## Onde os dados ficam
 
-- Banco JSON: `server/data/db.json`
+- Banco SQLite: `server/data/gxst.sqlite`
+- Arquivos auxiliares do SQLite: `server/data/gxst.sqlite-wal` e `server/data/gxst.sqlite-shm`
 - Vídeos enviados: `uploads/`
 
 Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Trocar JSON por PostgreSQL ou SQLite
-- Recuperação de senha
 - Página pública de perfil
 - Feed por algoritmo
 - Notificações reais
 - Moderação de conteúdo
+- Painel admin
 - Monetização real com gateway de pagamento
