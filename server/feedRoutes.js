@@ -1,4 +1,7 @@
+import { registerModerationRoutes } from "./moderationRoutes.js";
 import { fromJson, rowToVideo, scoreVideo, sqlite } from "./sqliteStore.js";
+
+let moderationRegistered = false;
 
 function daysSince(value) {
   const date = new Date(value || Date.now());
@@ -66,6 +69,11 @@ function algorithmScore(row, viewer, interests) {
 }
 
 export function registerFeedRoutes(app, getAuthUser) {
+  if (!moderationRegistered) {
+    registerModerationRoutes(app);
+    moderationRegistered = true;
+  }
+
   app.get("/api/feed/recommended", (req, res) => {
     const viewer = getAuthUser(req);
     const rows = sqlite.prepare("SELECT * FROM videos").all();
