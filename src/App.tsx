@@ -11,6 +11,7 @@ import {
   Heart,
   Home,
   Inbox,
+  LogOut,
   MessageCircle,
   Music2,
   Plus,
@@ -36,6 +37,7 @@ type CommentItem = {
 
 type VideoPost = {
   id: number;
+  userId: number | null;
   user: string;
   name: string;
   avatar: string;
@@ -53,15 +55,20 @@ type VideoPost = {
 };
 
 type CreatorProfile = {
+  id: number;
   user: string;
   name: string;
   bio: string;
   avatar: string;
   coins: number;
   followers: number;
+  followingUsers: string[];
+  likedVideos: number[];
+  savedVideos: number[];
 };
 
 type Tab = "home" | "search" | "inbox" | "profile";
+type AuthMode = "login" | "register";
 
 type GiftOption = {
   id: string;
@@ -71,6 +78,7 @@ type GiftOption = {
 };
 
 const API = "/api";
+const TOKEN_KEY = "gxst-token";
 
 const gifts: GiftOption[] = [
   { id: "rose", name: "Rosa", emoji: "🌹", coins: 5 },
@@ -79,31 +87,46 @@ const gifts: GiftOption[] = [
   { id: "diamond", name: "Diamante", emoji: "💎", coins: 100 }
 ];
 
-const defaultProfile: CreatorProfile = {
-  user: "meu.perfil",
-  name: "Meu Perfil",
-  bio: "Creator GXST Vibes • vídeos curtos, trends, capas e divulgação.",
-  avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=wallissonghost",
-  coins: 250,
-  followers: 1500
+const emptyProfile: CreatorProfile = {
+  id: 0,
+  user: "",
+  name: "",
+  bio: "",
+  avatar: "https://api.dicebear.com/8.x/avataaars/svg?seed=empty",
+  coins: 0,
+  followers: 0,
+  followingUsers: [],
+  likedVideos: [],
+  savedVideos: []
 };
 
-async function apiJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, options);
+async function apiJson<T>(url: string, options: RequestInit = {}, token = ""): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const response = await fetch(url, { ...options, headers });
   const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(data?.error || "Erro na API do GXST Vibes.");
-  }
+  if (!response.ok) throw new Error(data?.error || "Erro na API do GXST Vibes.");
   return data as T;
+}
+
+function recordFromIds(ids: number[] = []) {
+  return ids.reduce<Record<number, boolean>>((acc, id) => {
+    acc[id] = true;
+    return acc;
+  }, {});
 }
 
 export default function App() {
   const [videos, setVideos] = useState<VideoPost[]>([]);
-  const [profile, setProfile] = useState<CreatorProfile>(defaultProfile);
+  const [profile, setProfile] = useState<CreatorProfile>(emptyProfile);
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authForm, setAuthForm] = useState({ name: "", user: "ghost", password: "123456" });
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [feedMode, setFeedMode] = useState<"following" | "foryou">("foryou");
-  const [liked, setLiked] = useState<Record<number, boolean>>(() => loadRecord("gxst-liked", {}));
-  const [saved, setSaved] = useState<Record<number, boolean>>(() => loadRecord("gxst-saved", {}));
+  const [liked, setLiked] = useState<Record<number, boolean>>({});
+  const [saved, setSaved] = useState<Record<number, boolean>>({});
   const [query, setQuery] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -114,45 +137,77 @@ export default function App() {
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    creator: defaultProfile.name,
-    user: defaultProfile.user,
-    caption: "",
-    music: "Som original - Meu Perfil",
-    videoUrl: ""
-  });
+  const [authError, setAuthError] = useState("");
+  const [form, setForm] = useState({ caption: "", music: "Som original - Meu Perfil", videoUrl: "" });
 
   useEffect(() => {
-    localStorage.setItem("gxst-liked", JSON.stringify(liked));
-  }, [liked]);
+    if (!authToken) {
+      setLoading(false);
+      return;
+    }
+    loadAppData(authToken);
+  }, [authToken]);
 
-  useEffect(() => {
-    localStorage.setItem("gxst-saved", JSON.stringify(saved));
-  }, [saved]);
-
-  useEffect(() => {
-    setForm((current) => ({ ...current, creator: profile.name, user: profile.user }));
-  }, [profile.name, profile.user]);
-
-  useEffect(() => {
-    loadAppData();
-  }, []);
-
-  async function loadAppData() {
+  async function loadAppData(token = authToken) {
+    if (!token) return;
     setLoading(true);
     setError("");
     try {
       const [apiVideos, apiProfile] = await Promise.all([
-        apiJson<VideoPost[]>(`${API}/videos`),
-        apiJson<CreatorProfile>(`${API}/profile`)
+        apiJson<VideoPost[]>(`${API}/videos`, {}, token),
+        apiJson<CreatorProfile>(`${API}/auth/me`, {}, token)
       ]);
       setVideos(apiVideos);
       setProfile(apiProfile);
+      setLiked(recordFromIds(apiProfile.likedVideos));
+      setSaved(recordFromIds(apiProfile.savedVideos));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Erro ao carregar app.");
+      const message = caught instanceof Error ? caught.message : "Erro ao carregar app.";
+      setError(message);
+      if (message.toLowerCase().includes("login")) clearSession();
     } finally {
       setLoading(false);
     }
+  }
+
+  function clearSession() {
+    localStorage.removeItem(TOKEN_KEY);
+    setAuthToken("");
+    setProfile(emptyProfile);
+    setVideos([]);
+    setLiked({});
+    setSaved({});
+    setActiveTab("home");
+  }
+
+  async function submitAuth() {
+    setAuthError("");
+    try {
+      const endpoint = authMode === "login" ? "/auth/login" : "/auth/register";
+      const response = await apiJson<{ token: string; user: CreatorProfile }>(`${API}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authForm)
+      });
+
+      localStorage.setItem(TOKEN_KEY, response.token);
+      setAuthToken(response.token);
+      setProfile(response.user);
+      setLiked(recordFromIds(response.user.likedVideos));
+      setSaved(recordFromIds(response.user.savedVideos));
+      await loadAppData(response.token);
+    } catch (caught) {
+      setAuthError(caught instanceof Error ? caught.message : "Erro ao entrar.");
+    }
+  }
+
+  async function logout() {
+    try {
+      if (authToken) await apiJson(`${API}/auth/logout`, { method: "POST" }, authToken);
+    } catch {
+      // Mesmo se o servidor falhar, limpa a sessão local.
+    }
+    clearSession();
   }
 
   function replaceVideo(updated: VideoPost) {
@@ -180,45 +235,54 @@ export default function App() {
     });
   }, [query, videos]);
 
-  const ranking = useMemo(() => {
-    return [...videos].sort((a, b) => scoreVideo(b) - scoreVideo(a)).slice(0, 5);
-  }, [videos]);
-
-  const myVideos = videos.filter((video) => video.user === profile.user);
+  const ranking = useMemo(() => [...videos].sort((a, b) => scoreVideo(b) - scoreVideo(a)).slice(0, 5), [videos]);
+  const myVideos = videos.filter((video) => video.userId === profile.id || video.user === profile.user);
   const totalLikes = myVideos.reduce((sum, video) => sum + video.likes, 0);
   const totalGifts = myVideos.reduce((sum, video) => sum + video.gifts, 0);
 
   async function toggleLike(id: number) {
-    const nextLiked = !liked[id];
-    setLiked((current) => ({ ...current, [id]: nextLiked }));
-    setVideos((current) =>
-      current.map((video) =>
-        video.id === id
-          ? { ...video, likes: Math.max(0, video.likes + (nextLiked ? 1 : -1)) }
-          : video
-      )
-    );
-
     try {
-      const updated = await apiJson<VideoPost>(`${API}/videos/${id}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ liked: nextLiked })
-      });
-      replaceVideo(updated);
+      const response = await apiJson<{ video: VideoPost; user: CreatorProfile; liked: boolean }>(
+        `${API}/videos/${id}/like`,
+        { method: "POST" },
+        authToken
+      );
+      replaceVideo(response.video);
+      setProfile(response.user);
+      setLiked(recordFromIds(response.user.likedVideos));
     } catch (caught) {
       alert(caught instanceof Error ? caught.message : "Erro ao curtir.");
     }
   }
 
-  function toggleSave(id: number) {
-    setSaved((current) => ({ ...current, [id]: !current[id] }));
+  async function toggleSave(id: number) {
+    try {
+      const response = await apiJson<{ video: VideoPost; user: CreatorProfile; saved: boolean }>(
+        `${API}/videos/${id}/save`,
+        { method: "POST" },
+        authToken
+      );
+      replaceVideo(response.video);
+      setProfile(response.user);
+      setSaved(recordFromIds(response.user.savedVideos));
+    } catch (caught) {
+      alert(caught instanceof Error ? caught.message : "Erro ao salvar.");
+    }
   }
 
   async function toggleFollow(id: number) {
     try {
-      const updated = await apiJson<VideoPost>(`${API}/videos/${id}/follow`, { method: "POST" });
-      replaceVideo(updated);
+      const response = await apiJson<{ video: VideoPost; user: CreatorProfile; following: boolean }>(
+        `${API}/videos/${id}/follow`,
+        { method: "POST" },
+        authToken
+      );
+      setProfile(response.user);
+      setVideos((current) =>
+        current.map((video) =>
+          video.user === response.video.user ? { ...video, following: response.following } : video
+        )
+      );
     } catch (caught) {
       alert(caught instanceof Error ? caught.message : "Erro ao seguir.");
     }
@@ -226,7 +290,7 @@ export default function App() {
 
   async function shareVideo(video: VideoPost) {
     try {
-      const updated = await apiJson<VideoPost>(`${API}/videos/${video.id}/share`, { method: "POST" });
+      const updated = await apiJson<VideoPost>(`${API}/videos/${video.id}/share`, { method: "POST" }, authToken);
       replaceVideo(updated);
     } catch {
       return;
@@ -252,26 +316,15 @@ export default function App() {
     }
 
     const body = new FormData();
-    body.append("creator", form.creator);
-    body.append("user", form.user);
     body.append("caption", caption);
     body.append("music", form.music);
     body.append("videoUrl", form.videoUrl);
     if (selectedVideoFile) body.append("video", selectedVideoFile);
 
     try {
-      const created = await apiJson<VideoPost>(`${API}/videos`, {
-        method: "POST",
-        body
-      });
+      const created = await apiJson<VideoPost>(`${API}/videos`, { method: "POST", body }, authToken);
       setVideos((current) => [created, ...current]);
-      setForm({
-        creator: profile.name,
-        user: profile.user,
-        caption: "",
-        music: "Som original - Meu Perfil",
-        videoUrl: ""
-      });
+      setForm({ caption: "", music: "Som original - Meu Perfil", videoUrl: "" });
       setSelectedVideoUrl("");
       setSelectedVideoFile(null);
       setUploadOpen(false);
@@ -291,7 +344,8 @@ export default function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: commentText.trim() })
-        }
+        },
+        authToken
       );
       replaceVideo(response.video);
       setCommentText("");
@@ -303,15 +357,16 @@ export default function App() {
   async function sendGift(gift: GiftOption) {
     if (!giftVideo) return;
     try {
-      const response = await apiJson<{ profile: CreatorProfile; video: VideoPost }>(
+      const response = await apiJson<{ user: CreatorProfile; video: VideoPost }>(
         `${API}/videos/${giftVideo.id}/gift`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ giftId: gift.id })
-        }
+        },
+        authToken
       );
-      setProfile(response.profile);
+      setProfile(response.user);
       replaceVideo(response.video);
       setGiftVideo(null);
     } catch (caught) {
@@ -321,11 +376,15 @@ export default function App() {
 
   async function rechargeWallet() {
     try {
-      const updated = await apiJson<CreatorProfile>(`${API}/wallet/recharge`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 100 })
-      });
+      const updated = await apiJson<CreatorProfile>(
+        `${API}/wallet/recharge`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: 100 })
+        },
+        authToken
+      );
       setProfile(updated);
     } catch (caught) {
       alert(caught instanceof Error ? caught.message : "Erro ao recarregar carteira.");
@@ -334,19 +393,18 @@ export default function App() {
 
   async function saveProfile() {
     try {
-      const cleanProfile = {
-        ...profile,
-        user: profile.user.trim().replace("@", "") || "meu.perfil",
-        name: profile.name.trim() || "Meu Perfil",
-        bio: profile.bio.trim() || defaultProfile.bio
-      };
-      const updated = await apiJson<CreatorProfile>(`${API}/profile`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleanProfile)
-      });
+      const updated = await apiJson<CreatorProfile>(
+        `${API}/profile`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(profile)
+        },
+        authToken
+      );
       setProfile(updated);
       setEditProfileOpen(false);
+      await loadAppData(authToken);
     } catch (caught) {
       alert(caught instanceof Error ? caught.message : "Erro ao salvar perfil.");
     }
@@ -357,6 +415,19 @@ export default function App() {
     if (selectedVideoUrl.startsWith("blob:")) URL.revokeObjectURL(selectedVideoUrl);
     setSelectedVideoFile(file);
     setSelectedVideoUrl(URL.createObjectURL(file));
+  }
+
+  if (!authToken && !loading) {
+    return (
+      <AuthScreen
+        mode={authMode}
+        form={authForm}
+        error={authError}
+        onModeChange={(mode) => setAuthMode(mode)}
+        onFormChange={setAuthForm}
+        onSubmit={submitAuth}
+      />
+    );
   }
 
   return (
@@ -393,7 +464,7 @@ export default function App() {
         <section className="page center-page">
           <h1>Backend não respondeu</h1>
           <p>{error}</p>
-          <button className="primary-wide" onClick={loadAppData}>
+          <button className="primary-wide" onClick={() => loadAppData(authToken)}>
             Tentar novamente
           </button>
         </section>
@@ -407,6 +478,7 @@ export default function App() {
               video={video}
               liked={!!liked[video.id]}
               saved={!!saved[video.id]}
+              isMine={video.user === profile.user}
               onLike={() => toggleLike(video.id)}
               onSave={() => toggleSave(video.id)}
               onFollow={() => toggleFollow(video.id)}
@@ -499,9 +571,9 @@ export default function App() {
             <Bell />
           </div>
 
-          <Notification icon={<Heart />} title="Curtidas chegando" text="Seus vídeos somam novas curtidas no ranking." />
-          <Notification icon={<Gift />} title="Presentes ativados" text="Criadores agora podem receber rosas, coroas e diamantes." />
-          <Notification icon={<TrendingUp />} title="Backend conectado" text="Agora vídeos, comentários, perfil e moedas usam API real." />
+          <Notification icon={<Heart />} title="Conta logada" text={`Você entrou como @${profile.user}.`} />
+          <Notification icon={<Gift />} title="Presentes ativados" text="Criadores podem receber rosas, coroas e diamantes." />
+          <Notification icon={<TrendingUp />} title="Backend V4" text="Login, cadastro, sessões e usuários múltiplos estão ativos." />
         </section>
       )}
 
@@ -546,6 +618,11 @@ export default function App() {
             </button>
           </div>
 
+          <button className="logout-button" onClick={logout}>
+            <LogOut size={18} />
+            Sair da conta
+          </button>
+
           <div className="profile-grid">
             {videos.slice(0, 6).map((video) => (
               <video key={video.id} src={video.videoUrl} muted loop playsInline />
@@ -579,25 +656,11 @@ export default function App() {
             <label className="file-picker">
               <UploadCloud size={19} />
               <span>{selectedVideoFile ? selectedVideoFile.name : "Selecionar vídeo do aparelho"}</span>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(event) => handleVideoFile(event.target.files?.[0])}
-              />
+              <input type="file" accept="video/*" onChange={(event) => handleVideoFile(event.target.files?.[0])} />
             </label>
 
             {selectedVideoUrl && <video className="upload-preview" src={selectedVideoUrl} controls />}
 
-            <input
-              placeholder="Nome do criador"
-              value={form.creator}
-              onChange={(event) => setForm({ ...form, creator: event.target.value })}
-            />
-            <input
-              placeholder="Usuário, ex: ghost.creator"
-              value={form.user}
-              onChange={(event) => setForm({ ...form, user: event.target.value })}
-            />
             <input
               placeholder="URL do vídeo .mp4 opcional"
               value={form.videoUrl}
@@ -632,7 +695,7 @@ export default function App() {
               <Crown />
             </div>
             <h2>Editar perfil</h2>
-            <p>Essas informações agora são salvas no backend JSON do projeto.</p>
+            <p>Essas informações são salvas no usuário logado.</p>
             <input
               placeholder="Nome"
               value={profile.name}
@@ -692,9 +755,7 @@ export default function App() {
           </div>
 
           <div className="comment-list">
-            {commentVideo.commentList.length === 0 && (
-              <p className="empty-text">Seja o primeiro a comentar nesse vídeo.</p>
-            )}
+            {commentVideo.commentList.length === 0 && <p className="empty-text">Seja o primeiro a comentar nesse vídeo.</p>}
             {commentVideo.commentList.map((comment) => (
               <div className="comment-item" key={comment.id}>
                 <img src={comment.avatar} alt={comment.name} />
@@ -725,10 +786,66 @@ export default function App() {
   );
 }
 
+function AuthScreen({
+  mode,
+  form,
+  error,
+  onModeChange,
+  onFormChange,
+  onSubmit
+}: {
+  mode: AuthMode;
+  form: { name: string; user: string; password: string };
+  error: string;
+  onModeChange: (mode: AuthMode) => void;
+  onFormChange: (form: { name: string; user: string; password: string }) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <main className="auth-page">
+      <section className="auth-card">
+        <div className="auth-logo">GX</div>
+        <span className="eyebrow">GXST Vibes</span>
+        <h1>{mode === "login" ? "Entrar na conta" : "Criar conta"}</h1>
+        <p>App de vídeos curtos com login, upload, ranking, moedas e presentes.</p>
+
+        <div className="auth-tabs">
+          <button className={mode === "login" ? "active" : ""} onClick={() => onModeChange("login")}>Entrar</button>
+          <button className={mode === "register" ? "active" : ""} onClick={() => onModeChange("register")}>Cadastrar</button>
+        </div>
+
+        {mode === "register" && (
+          <input placeholder="Nome" value={form.name} onChange={(event) => onFormChange({ ...form, name: event.target.value })} />
+        )}
+        <input placeholder="Usuário" value={form.user} onChange={(event) => onFormChange({ ...form, user: event.target.value })} />
+        <input
+          placeholder="Senha"
+          type="password"
+          value={form.password}
+          onChange={(event) => onFormChange({ ...form, password: event.target.value })}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") onSubmit();
+          }}
+        />
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <button className="primary-wide" onClick={onSubmit}>
+          {mode === "login" ? "Entrar agora" : "Criar conta"}
+          <ChevronRight size={18} />
+        </button>
+
+        <small>Conta demo: usuário <b>ghost</b> / senha <b>123456</b></small>
+      </section>
+    </main>
+  );
+}
+
 function VideoCard({
   video,
   liked,
   saved,
+  isMine,
   onLike,
   onSave,
   onFollow,
@@ -739,6 +856,7 @@ function VideoCard({
   video: VideoPost;
   liked: boolean;
   saved: boolean;
+  isMine: boolean;
   onLike: () => void;
   onSave: () => void;
   onFollow: () => void;
@@ -761,9 +879,11 @@ function VideoCard({
             </strong>
             <span>{video.name}</span>
           </div>
-          <button className={video.following ? "follow-btn following" : "follow-btn"} onClick={onFollow}>
-            {video.following ? "Seguindo" : "Seguir"}
-          </button>
+          {!isMine && (
+            <button className={video.following ? "follow-btn following" : "follow-btn"} onClick={onFollow}>
+              {video.following ? "Seguindo" : "Seguir"}
+            </button>
+          )}
         </div>
 
         <p className="caption">{video.caption}</p>
@@ -792,17 +912,7 @@ function VideoCard({
   );
 }
 
-function ActionButton({
-  icon,
-  label,
-  active,
-  onClick
-}: {
-  icon: ReactNode;
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-}) {
+function ActionButton({ icon, label, active, onClick }: { icon: ReactNode; label: string; active?: boolean; onClick: () => void }) {
   return (
     <button className={active ? "action-button active" : "action-button"} onClick={onClick}>
       {icon}
@@ -811,17 +921,7 @@ function ActionButton({
   );
 }
 
-function NavButton({
-  icon,
-  label,
-  active,
-  onClick
-}: {
-  icon: ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+function NavButton({ icon, label, active, onClick }: { icon: ReactNode; label: string; active: boolean; onClick: () => void }) {
   return (
     <button className={active ? "nav-item active" : "nav-item"} onClick={onClick}>
       {icon}
@@ -841,15 +941,6 @@ function Notification({ icon, title, text }: { icon: ReactNode; title: string; t
       <ChevronRight size={18} />
     </div>
   );
-}
-
-function loadRecord<T>(key: string, fallback: T): T {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : fallback;
-  } catch {
-    return fallback;
-  }
 }
 
 function scoreVideo(video: VideoPost) {
