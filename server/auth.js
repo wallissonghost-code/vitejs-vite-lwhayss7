@@ -41,6 +41,44 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function profileFromVideo(username) {
+  const row = sqlite.prepare("SELECT * FROM videos WHERE user = ? ORDER BY id DESC LIMIT 1").get(username);
+  if (!row) return null;
+  return {
+    id: row.user_id || 0,
+    user: row.user,
+    name: row.name,
+    bio: "Perfil público do GXST Vibes.",
+    avatar: row.avatar,
+    coins: 0,
+    followers: 0,
+    followingUsers: [],
+    likedVideos: [],
+    savedVideos: []
+  };
+}
+
+function publicProfilePayload(username, viewer = null) {
+  const cleanUser = String(username || "").replace("@", "").trim().toLowerCase();
+  const user = getUserByUsername(cleanUser) || profileFromVideo(cleanUser);
+  if (!user) return null;
+  const rows = sqlite.prepare("SELECT * FROM videos WHERE user = ? ORDER BY id DESC").all(cleanUser);
+  const likes = rows.reduce((sum, video) => sum + Number(video.likes || 0), 0);
+  const gifts = rows.reduce((sum, video) => sum + Number(video.gifts || 0), 0);
+  return {
+    profile: publicUser(user),
+    stats: {
+      videos: rows.length,
+      likes,
+      gifts,
+      points: likes + gifts,
+      followers: user.followers || 0,
+      following: Boolean(viewer?.followingUsers?.includes(cleanUser))
+    },
+    videos: rows.map((row) => rowToVideo(row, viewer))
+  };
+}
+
 export function registerAuthRoutes(app) {
   app.post("/api/auth/register", (req, res) => {
     const userName = normalizeUser(req.body.user);
@@ -81,6 +119,29 @@ export function registerAuthRoutes(app) {
     const token = header.startsWith("Bearer ") ? header.slice(7) : "";
     sqlite.prepare("DELETE FROM sessions WHERE token = ?").run(token);
     res.json({ ok: true });
+  });
+
+  app.get("/api/public/profile/:user", (req, res) => {
+    const viewer = getAuthUser(req);
+    const payload = publicProfilePayload(req.params.user, viewer);
+    if (!payload) return res.status(404).json({ error: "Perfil não encontrado." });
+    res.json(payload);
+  });
+
+  app.post("/api/public/profile/:user/follow", requireAuth, (req, res) => {
+    const targetUser = normalizeUser(req.params.user);
+    if (!targetUser) return res.status(400).json({ error: "Usuário inválido." });
+    if (targetUser === req.user.user) return res.status(400).json({ error: "Você não pode seguir você mesmo." });
+    const target = getUserByUsername(targetUser);
+    if (!target && !profileFromVideo(targetUser)) return res.status(404).json({ error: "Perfil não encontrado." });
+    const following = req.user.followingUsers || [];
+    const has = following.includes(targetUser);
+    const next = has ? following.filter((item) => item !== targetUser) : [...following, targetUser];
+    sqlite.prepare("UPDATE users SET following_users = ? WHERE id = ?").run(toJson(next), req.user.id);
+    if (target) sqlite.prepare("UPDATE users SET followers = ? WHERE id = ?").run(Math.max(0, Number(target.followers || 0) + (has ? -1 : 1)), target.id);
+    const viewer = getUserByUsername(req.user.user);
+    const payload = publicProfilePayload(targetUser, viewer);
+    res.json(payload);
   });
 
   app.get("/api/admin/summary", requireAuth, requireAdmin, (_req, res) => {
