@@ -2,7 +2,7 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V8
+## O que já tem na V9
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
@@ -16,6 +16,10 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Botão **Meu perfil** para abrir o perfil público do usuário logado
 - Compartilhamento de perfil público
 - Seguir perfil pela página pública
+- Feed IA com algoritmo de recomendação
+- Botão flutuante **Feed IA**
+- Recomendações por curtidas, salvos, seguindo, hashtags, presentes, comentários e recência
+- Explicação do motivo da recomendação em cada vídeo
 - Notificações reais com tabela SQLite
 - Botão flutuante **Inbox** com contador de não lidas
 - Notificações de comentário, curtida, presente e seguidor
@@ -38,6 +42,24 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Aba Buscar com filtro por usuário, legenda, música e hashtag
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
+
+## Feed IA
+
+O botão flutuante **Feed IA** abre recomendações ordenadas por algoritmo.
+
+O score considera:
+
+- engajamento do vídeo
+- vídeos recentes
+- criadores que o usuário segue
+- criadores parecidos com vídeos curtidos/salvos
+- hashtags parecidas com interesses do usuário
+- presentes recebidos
+- penalização para vídeos já curtidos/salvos
+
+Rota:
+
+- `GET /api/feed/recommended`
 
 ## Perfil público
 
@@ -93,7 +115,7 @@ npm run dev
 O comando `npm run dev` sobe duas coisas ao mesmo tempo:
 
 - Vite/React no frontend
-- Express API V5/V6/V7/V8 com SQLite no backend, porta `3001`
+- Express API V5/V6/V7/V8/V9 com SQLite no backend, porta `3001`
 
 O Vite já está configurado para encaminhar `/api` e `/uploads` para o backend.
 
@@ -114,6 +136,10 @@ npm run server:json # backend antigo em JSON, caso precise voltar
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
+
+### Feed IA
+
+- `GET /api/feed/recommended`
 
 ### Perfil público
 
@@ -160,7 +186,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Feed por algoritmo
 - Moderação avançada de conteúdo
 - Página de denúncia
 - Monetização real com gateway de pagamento
