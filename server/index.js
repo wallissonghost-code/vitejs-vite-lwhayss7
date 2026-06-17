@@ -305,7 +305,8 @@ app.post("/api/videos/:id/gift", (req, res) => {
 
 if (fs.existsSync(DIST_DIR)) {
   app.use(express.static(DIST_DIR));
-  app.get("*", (_req, res) => {
+  app.use((req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) return next();
     res.sendFile(path.join(DIST_DIR, "index.html"));
   });
 }
