@@ -14,6 +14,8 @@ dist-ssr
 
 # GXST Vibes runtime files
 server/data/*.json
+server/data/*.sqlite
+server/data/*.sqlite-*
 uploads/*
 !uploads/.gitkeep
 
