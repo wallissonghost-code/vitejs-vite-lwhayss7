@@ -41,6 +41,70 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function initNotificationStore() {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY,
+      recipient_user_id INTEGER NOT NULL,
+      actor_user_id INTEGER,
+      actor_user TEXT NOT NULL DEFAULT 'sistema',
+      type TEXT NOT NULL,
+      video_id INTEGER,
+      message TEXT NOT NULL,
+      read_at TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (recipient_user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
+      FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+    );
+
+    CREATE TRIGGER IF NOT EXISTS notify_comment_insert
+    AFTER INSERT ON comments
+    WHEN (SELECT user_id FROM videos WHERE id = NEW.video_id) IS NOT NULL
+      AND (SELECT user_id FROM videos WHERE id = NEW.video_id) != NEW.user_id
+    BEGIN
+      INSERT INTO notifications (recipient_user_id, actor_user_id, actor_user, type, video_id, message, created_at)
+      VALUES ((SELECT user_id FROM videos WHERE id = NEW.video_id), NEW.user_id, NEW.user, 'comment', NEW.video_id, '@' || NEW.user || ' comentou no seu vídeo.', NEW.created_at);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS notify_like_update
+    AFTER UPDATE OF likes ON videos
+    WHEN NEW.likes > OLD.likes AND NEW.user_id IS NOT NULL
+    BEGIN
+      INSERT INTO notifications (recipient_user_id, actor_user_id, actor_user, type, video_id, message, created_at)
+      VALUES (NEW.user_id, NULL, 'sistema', 'like', NEW.id, 'Seu vídeo recebeu uma nova curtida.', datetime('now'));
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS notify_gift_update
+    AFTER UPDATE OF gifts ON videos
+    WHEN NEW.gifts > OLD.gifts AND NEW.user_id IS NOT NULL
+    BEGIN
+      INSERT INTO notifications (recipient_user_id, actor_user_id, actor_user, type, video_id, message, created_at)
+      VALUES (NEW.user_id, NULL, 'sistema', 'gift', NEW.id, 'Seu vídeo recebeu um presente.', datetime('now'));
+    END;
+  `);
+}
+
+function createNotification({ recipientUserId, actorUserId = null, actorUser = "sistema", type, videoId = null, message }) {
+  if (!recipientUserId || !type || !message) return;
+  sqlite.prepare(`
+    INSERT INTO notifications (recipient_user_id, actor_user_id, actor_user, type, video_id, message, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(recipientUserId, actorUserId, actorUser, type, videoId, message, new Date().toISOString());
+}
+
+function notificationPayload(row) {
+  return {
+    id: row.id,
+    actorUser: row.actor_user,
+    type: row.type,
+    videoId: row.video_id,
+    message: row.message,
+    read: Boolean(row.read_at),
+    createdAt: row.created_at
+  };
+}
+
 function profileFromVideo(username) {
   const row = sqlite.prepare("SELECT * FROM videos WHERE user = ? ORDER BY id DESC LIMIT 1").get(username);
   if (!row) return null;
@@ -80,6 +144,8 @@ function publicProfilePayload(username, viewer = null) {
 }
 
 export function registerAuthRoutes(app) {
+  initNotificationStore();
+
   app.post("/api/auth/register", (req, res) => {
     const userName = normalizeUser(req.body.user);
     const name = String(req.body.name || "").trim();
@@ -121,6 +187,23 @@ export function registerAuthRoutes(app) {
     res.json({ ok: true });
   });
 
+  app.get("/api/notifications", requireAuth, (req, res) => {
+    const rows = sqlite.prepare("SELECT * FROM notifications WHERE recipient_user_id = ? ORDER BY id DESC LIMIT 50").all(req.user.id);
+    const unread = sqlite.prepare("SELECT COUNT(*) AS total FROM notifications WHERE recipient_user_id = ? AND read_at IS NULL").get(req.user.id).total;
+    res.json({ unread, notifications: rows.map(notificationPayload) });
+  });
+
+  app.post("/api/notifications/:id/read", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    sqlite.prepare("UPDATE notifications SET read_at = ? WHERE id = ? AND recipient_user_id = ?").run(new Date().toISOString(), id, req.user.id);
+    res.json({ ok: true });
+  });
+
+  app.post("/api/notifications/read-all", requireAuth, (req, res) => {
+    sqlite.prepare("UPDATE notifications SET read_at = ? WHERE recipient_user_id = ? AND read_at IS NULL").run(new Date().toISOString(), req.user.id);
+    res.json({ ok: true });
+  });
+
   app.get("/api/public/profile/:user", (req, res) => {
     const viewer = getAuthUser(req);
     const payload = publicProfilePayload(req.params.user, viewer);
@@ -138,7 +221,18 @@ export function registerAuthRoutes(app) {
     const has = following.includes(targetUser);
     const next = has ? following.filter((item) => item !== targetUser) : [...following, targetUser];
     sqlite.prepare("UPDATE users SET following_users = ? WHERE id = ?").run(toJson(next), req.user.id);
-    if (target) sqlite.prepare("UPDATE users SET followers = ? WHERE id = ?").run(Math.max(0, Number(target.followers || 0) + (has ? -1 : 1)), target.id);
+    if (target) {
+      sqlite.prepare("UPDATE users SET followers = ? WHERE id = ?").run(Math.max(0, Number(target.followers || 0) + (has ? -1 : 1)), target.id);
+      if (!has) {
+        createNotification({
+          recipientUserId: target.id,
+          actorUserId: req.user.id,
+          actorUser: req.user.user,
+          type: "follow",
+          message: `@${req.user.user} começou a seguir você.`
+        });
+      }
+    }
     const viewer = getUserByUsername(req.user.user);
     const payload = publicProfilePayload(targetUser, viewer);
     res.json(payload);
