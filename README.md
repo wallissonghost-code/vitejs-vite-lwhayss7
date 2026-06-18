@@ -2,52 +2,74 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V16
+## O que já tem na V17
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Painel de métricas avançadas
+- Botão flutuante **Métricas**
+- Métricas do criador logado
+- Timeline dos últimos 7 dias
+- Ranking dos melhores vídeos do criador
+- Score de performance por vídeo
+- Métricas admin para `ghost`
+- Top criadores por performance
+- Receita fake de pagamentos pagos
+- Contagem de denúncias abertas e saques pendentes
 - Conversão automática opcional de vídeo com ffmpeg
 - Fallback automático caso ffmpeg não esteja disponível
 - Saída MP4 leve para feed vertical
 - Página pública externa dos criadores em `/@usuario`
 - Vitrine pública com perfil, estatísticas e vídeos
-- Botões de seguir, compartilhar e abrir no app
-- Link externo exemplo: `/@ghost`
 - Storage real com suporte a Supabase Storage
 - Upload local como fallback automático
 - Loja de moedas e VIP
-- Botão flutuante **Loja**
 - Gateway fake PIX para simular compra
-- Pacotes de moedas
-- Planos VIP
-- Histórico de pagamentos do usuário
-- Painel admin de pagamentos para `ghost`
-- Pagamento fake libera moedas ou VIP automaticamente
-- Tabela SQLite de pagamentos
-- Upload com nome limpo e extensão preservada
-- Configuração de storage por variáveis de ambiente
-- Suporte a `STORAGE_DRIVER=local` ou `STORAGE_DRIVER=supabase`
-- Health check com dados de storage em `GET /api/health`
-- Banco SQLite real usando `better-sqlite3`
-- Login e cadastro com usuário/senha
-- Senhas protegidas com `bcryptjs`
-- Sessão por token salvo no navegador
-- Usuários múltiplos
-- Perfil editável por usuário logado
-- Página pública interna por link `#/@usuario`
+- Carteira de criador
+- Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
 - Notificações reais com tabela SQLite
-- Sistema de denúncia de vídeos
-- Carteira de criador
-- Pedido de saque fake com chave PIX
 - Ranking de criadores por pontuação
-- Publicação usando URL de vídeo `.mp4`
-- Publicação com seleção de vídeo local do aparelho
+
+## Métricas avançadas
+
+O botão **Métricas** mostra o painel de desempenho do criador.
+
+Rotas:
+
+- `GET /api/analytics/creator`
+- `GET /api/admin/analytics`
+
+Métricas do criador:
+
+- vídeos publicados
+- curtidas
+- comentários
+- compartilhamentos
+- presentes
+- score geral
+- ganhos estimados
+- pagamentos pagos
+- melhores vídeos
+- atividade dos últimos 7 dias
+
+Métricas admin:
+
+- total de usuários
+- total de vídeos
+- total de comentários
+- curtidas totais
+- presentes totais
+- pagamentos pagos
+- receita fake
+- denúncias abertas
+- saques pendentes
+- top criadores
 
 ## Conversão de vídeo
 
-A V16 tenta converter vídeos automaticamente com ffmpeg.
+A V17 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -97,7 +119,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V16 usa `server/storageProvider.js`.
+A V17 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -136,9 +158,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V16
-npm run server     # apenas backend V13/V16
-npm run server:v13 # apenas backend V13/V16
+npm run dev        # frontend + backend V13/V17
+npm run server     # apenas backend V13/V17
+npm run server:v13 # apenas backend V13/V17
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -240,4 +262,4 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 - Integração com gateway real
 - SEO avançado para páginas públicas
-- Painel de métricas avançadas
+- Sistema de visualizações reais por vídeo
