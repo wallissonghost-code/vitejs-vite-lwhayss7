@@ -7,6 +7,7 @@ import { AnalyticsPanel } from "./AnalyticsPanel";
 import { CreatorWallet } from "./CreatorWallet";
 import { CreatorWebPage } from "./CreatorWebPage";
 import { DirectMessagesPanel } from "./DirectMessagesPanel";
+import { InternalPushAlerts } from "./InternalPushAlerts";
 import { LiveCommentsPanel } from "./LiveCommentsPanel";
 import { ModerationPanel } from "./ModerationPanel";
 import { NotificationsPanel } from "./NotificationsPanel";
@@ -27,6 +28,7 @@ import "./creator-page.css";
 import "./analytics.css";
 import "./live-comments.css";
 import "./direct-messages.css";
+import "./internal-push.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -41,6 +43,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <AnalyticsPanel />
     <LiveCommentsPanel />
     <DirectMessagesPanel />
+    <InternalPushAlerts />
     <ViewTracker />
     <PublicProfileRouter />
     <CreatorWebPage />
