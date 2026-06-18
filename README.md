@@ -2,37 +2,72 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V21
+## O que já tem na V22
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- SEO avançado para páginas públicas `/@usuario`
+- Título dinâmico por criador
+- Description dinâmica por criador
+- Canonical URL por perfil
+- Open Graph para preview social
+- Twitter Card para compartilhamento
+- JSON-LD tipo Person
+- SEO server-side em produção quando existe `dist/index.html`
+- SEO client-side também no navegador
 - Notificações push internas em formato toast
 - Alertas na tela para DM, comentário, curtida, presente e follow
-- DM agora também cria notificação no Inbox
-- Toasts com deduplicação local para não repetir alerta antigo
 - Chat direto entre usuários
-- Botão flutuante **Chat**
-- Inbox privado com conversas
-- Busca de usuários para iniciar conversa
-- Envio de mensagem privada sem recarregar
-- Atualização automática das mensagens por polling leve
-- Contador de mensagens não lidas
-- Comentários em tempo real por polling leve
-- Sistema de visualizações reais por vídeo
-- Tracker automático de views no frontend
+- Comentários em tempo real
+- Visualizações reais por vídeo
 - Painel de métricas avançadas
 - Conversão automática opcional de vídeo com ffmpeg
-- Página pública externa dos criadores em `/@usuario`
 - Storage real com suporte a Supabase Storage
 - Loja de moedas e VIP
 - Carteira de criador
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
 
-## Push interno
+## SEO das páginas públicas
 
-O app agora mostra alertas visuais no canto da tela quando chegam eventos novos.
+Cada criador tem uma página pública:
+
+```txt
+/@usuario
+```
+
+Exemplo:
+
+```txt
+/@ghost
+```
+
+O servidor injeta meta tags no HTML em produção:
+
+- `<title>` dinâmico
+- `meta description`
+- `link canonical`
+- `og:type`
+- `og:title`
+- `og:description`
+- `og:url`
+- `og:image`
+- `twitter:card`
+- `twitter:title`
+- `twitter:description`
+- `twitter:image`
+- JSON-LD `Person`
+
+Variável recomendada em produção:
+
+```txt
+PUBLIC_SITE_URL=https://seudominio.com
+```
+
+Sem essa variável, o servidor tenta montar a URL usando o host da requisição.
+
+## Push interno
 
 Eventos cobertos:
 
@@ -41,14 +76,6 @@ Eventos cobertos:
 - curtida
 - presente
 - follow
-
-Como funciona:
-
-- o frontend consulta `/api/notifications`
-- também consulta `/api/dm/threads` para mensagens privadas não lidas
-- cada alerta é salvo localmente como visto para não ficar repetindo
-- as notificações continuam aparecendo no botão **Inbox**
-- DMs novas também criam notificação do tipo `dm`
 
 ## Chat direto
 
@@ -84,7 +111,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V21 tenta converter vídeos automaticamente com ffmpeg.
+A V22 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -106,20 +133,6 @@ Para desligar:
 VIDEO_PROCESSING=off
 ```
 
-## Página pública externa
-
-Cada criador pode ter uma página externa:
-
-```txt
-/@usuario
-```
-
-Exemplo:
-
-```txt
-/@ghost
-```
-
 ## Loja / Pagamentos
 
 Rotas:
@@ -132,7 +145,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V21 usa `server/storageProvider.js`.
+A V22 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -171,9 +184,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V21
-npm run server     # apenas backend V13/V21
-npm run server:v13 # apenas backend V13/V21
+npm run dev        # frontend + backend V13/V22
+npm run server     # apenas backend V13/V22
+npm run server:v13 # apenas backend V13/V22
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -277,5 +290,5 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 ## Próximas melhorias
 
 - Integração com gateway real
-- SEO avançado para páginas públicas
 - Sistema de chamadas/ao vivo
+- Loja/assinatura com checkout real
