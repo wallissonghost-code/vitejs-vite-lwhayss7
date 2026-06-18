@@ -2,20 +2,23 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V23
+## O que já tem na V24
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Câmera ao vivo WebRTC em modo beta
+- Botão flutuante **Câmera**
+- Criador pode abrir câmera e microfone pelo navegador
+- Espectador pode entrar como viewer WebRTC
+- Sinalização WebRTC por polling: offer, answer e ICE
+- STUN público para conexão P2P
 - Sistema de lives fake dentro do app
 - Botão flutuante **Ao Vivo**
 - Criação de sala ao vivo
-- Lista de salas ativas
-- Entrada em sala com contador de espectadores
 - Chat da live com atualização automática
 - Envio de presentes em moedas na live
 - Ranking de salas por espectadores e presentes
-- Encerrar live pelo criador ou admin `ghost`
 - SEO avançado para páginas públicas `/@usuario`
 - Notificações push internas em formato toast
 - Chat direto entre usuários
@@ -29,9 +32,31 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
 
-## Lives fake
+## Câmera ao vivo WebRTC beta
 
-O botão **Ao Vivo** abre o painel de salas.
+O botão **Câmera** abre o painel de transmissão real em modo beta.
+
+Rotas de sinalização:
+
+- `POST /api/live/rooms/:id/webrtc/viewer`
+- `GET /api/live/rooms/:id/webrtc/peers`
+- `POST /api/live/webrtc/peers/:id/offer`
+- `GET /api/live/webrtc/peers/:id/offer`
+- `POST /api/live/webrtc/peers/:id/answer`
+- `GET /api/live/webrtc/peers/:id/answer`
+- `POST /api/live/webrtc/peers/:id/ice`
+- `GET /api/live/webrtc/peers/:id/ice`
+
+Como usar:
+
+1. Crie uma sala no botão **Ao Vivo**.
+2. Abra o botão **Câmera**.
+3. Clique em **Transmitir** na sala.
+4. Outro usuário abre **Câmera** e clica em **Assistir**.
+
+Observação: esta é uma versão beta P2P. Pode depender de permissões do navegador, HTTPS e compatibilidade de rede.
+
+## Lives fake
 
 Rotas:
 
@@ -49,8 +74,7 @@ Tabelas novas:
 - `live_rooms`
 - `live_chat_messages`
 - `live_viewers`
-
-Observação: esta versão cria lives simuladas dentro do app. Não transmite câmera real ainda.
+- `live_webrtc_peers`
 
 ## SEO das páginas públicas
 
@@ -125,7 +149,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V23 tenta converter vídeos automaticamente com ffmpeg.
+A V24 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -159,7 +183,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V23 usa `server/storageProvider.js`.
+A V24 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -198,9 +222,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V23
-npm run server     # apenas backend V13/V23
-npm run server:v13 # apenas backend V13/V23
+npm run dev        # frontend + backend V13/V24
+npm run server     # apenas backend V13/V24
+npm run server:v13 # apenas backend V13/V24
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -291,7 +315,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
-- Lives fake: tabelas `live_rooms`, `live_chat_messages`, `live_viewers`
+- Lives: tabelas `live_rooms`, `live_chat_messages`, `live_viewers`, `live_webrtc_peers`
 - Mensagens privadas: tabela `direct_messages`
 - Notificações: tabela `notifications`
 - Comentários: tabela `comments`
@@ -304,6 +328,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Transmissão real com câmera/WebRTC
 - Checkout real de moedas/VIP
 - Sistema de assinatura dos criadores
+- Melhorias visuais dedicadas para live/câmera
