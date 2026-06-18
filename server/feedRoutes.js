@@ -4,6 +4,7 @@ import { registerLiveCommentRoutes } from "./liveCommentRoutes.js";
 import { registerModerationRoutes } from "./moderationRoutes.js";
 import { registerMonetizationRoutes } from "./monetizationRoutes.js";
 import { registerPaymentRoutes } from "./paymentRoutes.js";
+import { registerRoomRoutes } from "./roomRoutes.js";
 import { registerViewRoutes } from "./viewRoutes.js";
 import { fromJson, rowToVideo, scoreVideo, sqlite } from "./sqliteStore.js";
 
@@ -88,6 +89,7 @@ export function registerFeedRoutes(app, getAuthUser) {
     registerViewRoutes(app, getAuthUser);
     registerLiveCommentRoutes(app, getAuthUser);
     registerDirectMessageRoutes(app, getAuthUser);
+    registerRoomRoutes(app, getAuthUser);
     extraRoutesRegistered = true;
   }
 
