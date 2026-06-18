@@ -8,6 +8,7 @@ import { ModerationPanel } from "./ModerationPanel";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { PublicProfileRouter } from "./PublicProfile";
 import { PublicProfileShortcut } from "./PublicProfileShortcut";
+import { ShopPanel } from "./ShopPanel";
 import "./styles.css";
 import "./backend.css";
 import "./admin.css";
@@ -16,6 +17,7 @@ import "./notifications.css";
 import "./algorithm.css";
 import "./moderation.css";
 import "./wallet.css";
+import "./shop.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -26,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <AlgorithmFeed />
     <ModerationPanel />
     <CreatorWallet />
+    <ShopPanel />
     <PublicProfileRouter />
   </React.StrictMode>
 );
