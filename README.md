@@ -2,22 +2,22 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V22
+## O que já tem na V23
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Sistema de lives fake dentro do app
+- Botão flutuante **Ao Vivo**
+- Criação de sala ao vivo
+- Lista de salas ativas
+- Entrada em sala com contador de espectadores
+- Chat da live com atualização automática
+- Envio de presentes em moedas na live
+- Ranking de salas por espectadores e presentes
+- Encerrar live pelo criador ou admin `ghost`
 - SEO avançado para páginas públicas `/@usuario`
-- Título dinâmico por criador
-- Description dinâmica por criador
-- Canonical URL por perfil
-- Open Graph para preview social
-- Twitter Card para compartilhamento
-- JSON-LD tipo Person
-- SEO server-side em produção quando existe `dist/index.html`
-- SEO client-side também no navegador
 - Notificações push internas em formato toast
-- Alertas na tela para DM, comentário, curtida, presente e follow
 - Chat direto entre usuários
 - Comentários em tempo real
 - Visualizações reais por vídeo
@@ -28,6 +28,29 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Carteira de criador
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
+
+## Lives fake
+
+O botão **Ao Vivo** abre o painel de salas.
+
+Rotas:
+
+- `GET /api/live/rooms`
+- `POST /api/live/rooms`
+- `GET /api/live/rooms/:id`
+- `POST /api/live/rooms/:id/join`
+- `POST /api/live/rooms/:id/end`
+- `GET /api/live/rooms/:id/chat`
+- `POST /api/live/rooms/:id/chat`
+- `POST /api/live/rooms/:id/gift`
+
+Tabelas novas:
+
+- `live_rooms`
+- `live_chat_messages`
+- `live_viewers`
+
+Observação: esta versão cria lives simuladas dentro do app. Não transmite câmera real ainda.
 
 ## SEO das páginas públicas
 
@@ -48,15 +71,8 @@ O servidor injeta meta tags no HTML em produção:
 - `<title>` dinâmico
 - `meta description`
 - `link canonical`
-- `og:type`
-- `og:title`
-- `og:description`
-- `og:url`
-- `og:image`
-- `twitter:card`
-- `twitter:title`
-- `twitter:description`
-- `twitter:image`
+- Open Graph
+- Twitter Card
 - JSON-LD `Person`
 
 Variável recomendada em produção:
@@ -64,8 +80,6 @@ Variável recomendada em produção:
 ```txt
 PUBLIC_SITE_URL=https://seudominio.com
 ```
-
-Sem essa variável, o servidor tenta montar a URL usando o host da requisição.
 
 ## Push interno
 
@@ -111,7 +125,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V22 tenta converter vídeos automaticamente com ffmpeg.
+A V23 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -145,7 +159,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V22 usa `server/storageProvider.js`.
+A V23 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -184,9 +198,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V22
-npm run server     # apenas backend V13/V22
-npm run server:v13 # apenas backend V13/V22
+npm run dev        # frontend + backend V13/V23
+npm run server     # apenas backend V13/V23
+npm run server:v13 # apenas backend V13/V23
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -277,6 +291,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
+- Lives fake: tabelas `live_rooms`, `live_chat_messages`, `live_viewers`
 - Mensagens privadas: tabela `direct_messages`
 - Notificações: tabela `notifications`
 - Comentários: tabela `comments`
@@ -289,6 +304,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Integração com gateway real
-- Sistema de chamadas/ao vivo
-- Loja/assinatura com checkout real
+- Transmissão real com câmera/WebRTC
+- Checkout real de moedas/VIP
+- Sistema de assinatura dos criadores
