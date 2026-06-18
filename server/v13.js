@@ -17,6 +17,7 @@ import {
   toJson
 } from "./sqliteStore.js";
 import { getAuthUser, registerAuthRoutes, requireAuth } from "./auth.js";
+import { registerSeoRoutes } from "./seoRoutes.js";
 import { createStorageProvider } from "./storageProvider.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -62,7 +63,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     app: "GXST Vibes",
-    version: "V13 Supabase Storage Ready",
+    version: "V22 SEO Creator Pages",
     database: "SQLite",
     storage: storage.config,
     production: isProduction
@@ -209,6 +210,7 @@ app.use((err, _req, res, _next) => {
 });
 
 if (fs.existsSync(DIST_DIR)) {
+  registerSeoRoutes(app, DIST_DIR);
   app.use(express.static(DIST_DIR, { maxAge: isProduction ? "1h" : 0 }));
   app.use((req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) return next();
@@ -216,4 +218,4 @@ if (fs.existsSync(DIST_DIR)) {
   });
 }
 
-app.listen(PORT, () => console.log(`GXST Vibes V13 em http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`GXST Vibes V22 em http://localhost:${PORT}`));
