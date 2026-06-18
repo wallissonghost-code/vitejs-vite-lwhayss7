@@ -2,17 +2,21 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V19
+## O que já tem na V20
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Chat direto entre usuários
+- Botão flutuante **Chat**
+- Inbox privado com conversas
+- Busca de usuários para iniciar conversa
+- Envio de mensagem privada sem recarregar
+- Atualização automática das mensagens por polling leve
+- Contador de mensagens não lidas
+- Marcação de conversa como lida
 - Comentários em tempo real por polling leve
 - Botão flutuante **Comentários**
-- Painel live para escolher vídeo e comentar
-- Busca incremental por `afterId`
-- Envio de comentário sem recarregar o app
-- Lista atualizando automaticamente
 - Sistema de visualizações reais por vídeo
 - Tracker automático de views no frontend
 - Views entrando nas métricas e no Feed IA
@@ -27,23 +31,33 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Feed IA com algoritmo de recomendação
 - Notificações reais com tabela SQLite
 
-## Comentários em tempo real
+## Chat direto
 
-O botão **Comentários** abre um painel live.
+O botão **Chat** abre o inbox privado do usuário.
+
+Rotas:
+
+- `GET /api/dm/users`
+- `GET /api/dm/threads`
+- `GET /api/dm/thread/:username`
+- `POST /api/dm/thread/:username`
+- `POST /api/dm/thread/:username/read`
+
+Como funciona:
+
+- cada mensagem fica salva na tabela `direct_messages`
+- usuários podem buscar outros perfis pelo @ ou nome
+- conversas mostram a última mensagem e contador de não lidas
+- a conversa aberta atualiza automaticamente
+- ao abrir a conversa, as mensagens recebidas são marcadas como lidas
+
+## Comentários em tempo real
 
 Rotas:
 
 - `GET /api/videos/:id/comments/live`
 - `POST /api/videos/:id/comments/live`
 - `GET /api/comments/live/summary`
-
-Como funciona:
-
-- o painel busca comentários novos a cada poucos segundos
-- usa `afterId` para trazer somente comentários novos
-- permite enviar comentário sem recarregar o app
-- comentários continuam usando a tabela `comments`
-- notificações de comentário seguem funcionando pelo trigger SQLite existente
 
 ## Visualizações reais
 
@@ -63,7 +77,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V19 tenta converter vídeos automaticamente com ffmpeg.
+A V20 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -111,7 +125,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V19 usa `server/storageProvider.js`.
+A V20 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -150,9 +164,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V19
-npm run server     # apenas backend V13/V19
-npm run server:v13 # apenas backend V13/V19
+npm run dev        # frontend + backend V13/V20
+npm run server     # apenas backend V13/V20
+npm run server:v13 # apenas backend V13/V20
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -243,6 +257,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
+- Mensagens privadas: tabela `direct_messages`
 - Comentários: tabela `comments`
 - Views: tabela `video_views`
 - Upload local: `uploads/`
@@ -255,4 +270,4 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 - Integração com gateway real
 - SEO avançado para páginas públicas
-- Chat direto entre usuários
+- Notificações push internas
