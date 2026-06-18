@@ -2,39 +2,51 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V17
+## O que já tem na V18
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Sistema de visualizações reais por vídeo
+- Tracker automático de views no frontend
+- Registro de view por usuário logado ou visitante anônimo
+- Deduplicação de visualização recente por vídeo
+- Views entrando nas métricas do criador
+- Views entrando nas métricas admin
+- Views influenciando o Feed IA
 - Painel de métricas avançadas
 - Botão flutuante **Métricas**
-- Métricas do criador logado
-- Timeline dos últimos 7 dias
-- Ranking dos melhores vídeos do criador
-- Score de performance por vídeo
-- Métricas admin para `ghost`
-- Top criadores por performance
-- Receita fake de pagamentos pagos
-- Contagem de denúncias abertas e saques pendentes
+- Timeline dos últimos 7 dias com views
+- Ranking dos melhores vídeos por performance
 - Conversão automática opcional de vídeo com ffmpeg
-- Fallback automático caso ffmpeg não esteja disponível
-- Saída MP4 leve para feed vertical
 - Página pública externa dos criadores em `/@usuario`
-- Vitrine pública com perfil, estatísticas e vídeos
 - Storage real com suporte a Supabase Storage
-- Upload local como fallback automático
 - Loja de moedas e VIP
 - Gateway fake PIX para simular compra
 - Carteira de criador
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
 - Notificações reais com tabela SQLite
-- Ranking de criadores por pontuação
+
+## Visualizações reais
+
+O app agora registra visualizações automaticamente quando um vídeo aparece/toca.
+
+Rotas:
+
+- `POST /api/videos/:id/view`
+- `GET /api/videos/:id/views`
+
+Como funciona:
+
+- o frontend observa os elementos `<video>`
+- quando o vídeo fica visível ou toca, envia uma view
+- usuário logado conta por `userId`
+- usuário anônimo conta por `visitorId`
+- views repetidas do mesmo usuário/visitante no mesmo vídeo são ignoradas por janela de tempo
+- as views entram no score do Feed IA e no painel de métricas
 
 ## Métricas avançadas
-
-O botão **Métricas** mostra o painel de desempenho do criador.
 
 Rotas:
 
@@ -44,13 +56,13 @@ Rotas:
 Métricas do criador:
 
 - vídeos publicados
+- views
 - curtidas
 - comentários
 - compartilhamentos
 - presentes
 - score geral
 - ganhos estimados
-- pagamentos pagos
 - melhores vídeos
 - atividade dos últimos 7 dias
 
@@ -58,7 +70,8 @@ Métricas admin:
 
 - total de usuários
 - total de vídeos
-- total de comentários
+- views totais
+- viewers únicos
 - curtidas totais
 - presentes totais
 - pagamentos pagos
@@ -69,7 +82,7 @@ Métricas admin:
 
 ## Conversão de vídeo
 
-A V17 tenta converter vídeos automaticamente com ffmpeg.
+A V18 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -105,8 +118,6 @@ Exemplo:
 /@ghost
 ```
 
-Essa página mostra avatar, nome, bio, estatísticas, vídeos, seguir, compartilhar e abrir no app.
-
 ## Loja / Pagamentos
 
 Rotas:
@@ -119,7 +130,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V17 usa `server/storageProvider.js`.
+A V18 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -158,9 +169,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V17
-npm run server     # apenas backend V13/V17
-npm run server:v13 # apenas backend V13/V17
+npm run dev        # frontend + backend V13/V18
+npm run server     # apenas backend V13/V18
+npm run server:v13 # apenas backend V13/V18
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -251,7 +262,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
-- Arquivos auxiliares do SQLite: `server/data/gxst.sqlite-wal` e `server/data/gxst.sqlite-shm`
+- Views: tabela `video_views`
 - Upload local: `uploads/`
 - Upload Supabase: bucket configurado em `SUPABASE_BUCKET`
 - Pagamentos: tabela `payments`
@@ -262,4 +273,4 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 - Integração com gateway real
 - SEO avançado para páginas públicas
-- Sistema de visualizações reais por vídeo
+- Sistema de comentários em tempo real
