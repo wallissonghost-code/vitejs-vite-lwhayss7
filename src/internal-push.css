@@ -1,0 +1,71 @@
+.internal-push-stack {
+  position: fixed;
+  right: 14px;
+  bottom: 18px;
+  z-index: 240;
+  display: grid;
+  gap: 10px;
+  width: min(340px, calc(100vw - 28px));
+  pointer-events: none;
+}
+
+.internal-push-toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 42px 1fr 30px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(16, 16, 20, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  animation: pushToastIn 0.22s ease-out;
+}
+
+.internal-push-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(255, 0, 92, 0.25));
+  color: #fff;
+}
+
+.internal-push-toast strong,
+.internal-push-toast p {
+  display: block;
+}
+
+.internal-push-toast strong {
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.internal-push-toast p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.internal-push-toast button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes pushToastIn {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
