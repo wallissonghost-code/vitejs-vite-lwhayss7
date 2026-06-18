@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Coins, CreditCard, RefreshCw, ShoppingBag, Sparkles, X } from "lucide-react";
+import { BadgeCheck, Coins, CreditCard, QrCode, RefreshCw, ShoppingBag, Sparkles, X } from "lucide-react";
 
 type CoinPackage = {
   id: string;
@@ -25,7 +25,11 @@ type Payment = {
   coins: number;
   status: string;
   gateway: string;
+  externalId?: string;
   qrCode: string;
+  qrCodeBase64?: string;
+  ticketUrl?: string;
+  mercadoPagoStatus?: string;
   createdAt: string;
   paidAt?: string | null;
   user?: { user: string; name: string } | null;
@@ -35,6 +39,7 @@ type ProductsResponse = {
   coinPackages: CoinPackage[];
   vipPlans: VipPlan[];
   gateway: string;
+  mercadoPagoReady: boolean;
 };
 
 type CurrentUser = {
@@ -57,6 +62,10 @@ function money(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function gatewayLabel(gateway: string) {
+  return gateway === "mercado_pago_pix" ? "Mercado Pago Pix" : "PIX fake";
+}
+
 export function ShopPanel() {
   const [token, setToken] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -66,6 +75,8 @@ export function ShopPanel() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [adminPayments, setAdminPayments] = useState<Payment[]>([]);
   const [activePayment, setActivePayment] = useState<Payment | null>(null);
+  const [gateway, setGateway] = useState("fake_pix");
+  const [mercadoPagoReady, setMercadoPagoReady] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -76,6 +87,8 @@ export function ShopPanel() {
       const products = await shopRequest<ProductsResponse>("/api/shop/products");
       setCoinPackages(products.coinPackages);
       setVipPlans(products.vipPlans);
+      setGateway(products.gateway || "fake_pix");
+      setMercadoPagoReady(Boolean(products.mercadoPagoReady));
 
       if (savedToken) {
         const me = await shopRequest<CurrentUser>("/api/auth/me", savedToken);
@@ -103,7 +116,7 @@ export function ShopPanel() {
     try {
       const payment = await shopRequest<Payment>("/api/shop/checkout", token, {
         method: "POST",
-        body: JSON.stringify({ productId })
+        body: JSON.stringify({ productId, gateway })
       });
       setActivePayment(payment);
       await loadShop();
@@ -121,6 +134,18 @@ export function ShopPanel() {
       await loadShop();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Erro ao confirmar pagamento.");
+    }
+  }
+
+  async function syncPayment(paymentId: number) {
+    if (!token) return;
+    try {
+      const result = await shopRequest<{ payment: Payment }>(`/api/shop/payments/${paymentId}/sync`, token, { method: "POST" });
+      setActivePayment(result.payment);
+      setSuccess(result.payment.status === "paid" ? "Pagamento aprovado e benefício liberado." : "Status do Mercado Pago atualizado.");
+      await loadShop();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Erro ao sincronizar pagamento.");
     }
   }
 
@@ -144,14 +169,14 @@ export function ShopPanel() {
               <div>
                 <span className="eyebrow">GXST Pay</span>
                 <h2>Loja</h2>
-                <p>Moedas, VIP e pagamento PIX fake.</p>
+                <p>{mercadoPagoReady ? "Pix real Mercado Pago ativo." : "PIX fake ativo. Configure o token para Pix real."}</p>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Fechar loja"><X /></button>
             </div>
 
             <div className="shop-actions">
               <button onClick={loadShop}><RefreshCw size={16} /> Atualizar</button>
-              <button><CreditCard size={16} /> PIX fake</button>
+              <button onClick={() => setGateway(mercadoPagoReady ? "mercado_pago_pix" : "fake_pix")}><CreditCard size={16} /> {gatewayLabel(gateway)}</button>
             </div>
 
             {error && <div className="auth-error">{error}</div>}
@@ -161,9 +186,12 @@ export function ShopPanel() {
               <section className="shop-payment-box">
                 <h3>Pagamento #{activePayment.id}</h3>
                 <strong>{money(activePayment.amount)}</strong>
-                <small>Status: {activePayment.status}</small>
+                <small>Status: {activePayment.status} • {gatewayLabel(activePayment.gateway)}</small>
+                {activePayment.qrCodeBase64 && <img src={`data:image/png;base64,${activePayment.qrCodeBase64}`} alt="QR Code Pix" style={{ width: "180px", maxWidth: "100%", borderRadius: 12, background: "#fff", padding: 8, marginBottom: 10 }} />}
+                {activePayment.ticketUrl && <a href={activePayment.ticketUrl} target="_blank" rel="noreferrer"><QrCode size={15} /> Abrir Pix</a>}
                 <code>{activePayment.qrCode}</code>
-                {activePayment.status !== "paid" && <button onClick={() => simulatePaid(activePayment.id)}>Simular pagamento aprovado</button>}
+                {activePayment.gateway === "fake_pix" && activePayment.status !== "paid" && <button onClick={() => simulatePaid(activePayment.id)}>Simular pagamento aprovado</button>}
+                {activePayment.gateway === "mercado_pago_pix" && activePayment.status !== "paid" && <button onClick={() => syncPayment(activePayment.id)}>Sincronizar Mercado Pago</button>}
               </section>
             )}
 
@@ -218,7 +246,7 @@ function PaymentRow({ payment, admin = false, onClick }: { payment: Payment; adm
     <button className="payment-row" onClick={onClick}>
       <div>
         <strong>#{payment.id} • {payment.productId}</strong>
-        <small>{admin && payment.user ? `@${payment.user.user} • ` : ""}{money(payment.amount)} • {payment.status}</small>
+        <small>{admin && payment.user ? `@${payment.user.user} • ` : ""}{money(payment.amount)} • {payment.status} • {gatewayLabel(payment.gateway)}</small>
       </div>
     </button>
   );
