@@ -53,6 +53,17 @@ function findChatUser(username, currentUserId) {
   return user;
 }
 
+function notifyDirectMessage({ recipientId, actorId, actorUser, createdAt }) {
+  try {
+    sqlite.prepare(`
+      INSERT INTO notifications (recipient_user_id, actor_user_id, actor_user, type, video_id, message, created_at)
+      VALUES (?, ?, ?, 'dm', NULL, ?, ?)
+    `).run(recipientId, actorId, actorUser, `@${actorUser} enviou uma mensagem privada.`, createdAt);
+  } catch {
+    // notifications table is initialized by auth routes; ignore if unavailable
+  }
+}
+
 function threadSummaryForUser(currentUserId, otherUserId) {
   const last = sqlite.prepare(`
     SELECT * FROM direct_messages
@@ -146,10 +157,13 @@ export function registerDirectMessageRoutes(app, getAuthUser) {
     if (!text) return res.status(400).json({ error: "Mensagem vazia." });
     if (text.length > 500) return res.status(400).json({ error: "Mensagem muito grande. Use até 500 caracteres." });
 
+    const createdAt = new Date().toISOString();
     const result = sqlite.prepare(`
       INSERT INTO direct_messages (sender_user_id, recipient_user_id, text, created_at)
       VALUES (?, ?, ?, ?)
-    `).run(req.user.id, other.id, text, new Date().toISOString());
+    `).run(req.user.id, other.id, text, createdAt);
+
+    notifyDirectMessage({ recipientId: other.id, actorId: req.user.id, actorUser: req.user.user, createdAt });
 
     const row = sqlite.prepare("SELECT * FROM direct_messages WHERE id = ?").get(Number(result.lastInsertRowid));
     res.status(201).json({ message: messagePayload(row), thread: threadSummaryForUser(req.user.id, other.id) });
