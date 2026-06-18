@@ -2,19 +2,23 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V25
+## O que já tem na V26
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Sistema de assinatura dos criadores
+- Botão flutuante **Assinar**
+- Planos Fã, Premium e VIP Criador
+- Assinatura usando moedas internas
+- Renovação por 30 dias
+- Repasse automático de 70% das moedas para o criador
+- Lista de criadores para assinar
+- Minhas assinaturas
+- Lista de membros assinantes do criador
+- Notificação quando alguém assina o perfil
 - Checkout real Mercado Pago Pix para moedas e VIP
 - Fallback automático para Pix fake quando não houver token
-- QR Code Pix real na Loja
-- Código copia-e-cola Pix real
-- Link/ticket Pix quando retornado pelo Mercado Pago
-- Sincronização de status do pagamento real
-- Webhook Mercado Pago para atualizar pagamento aprovado
-- Liberação automática de moedas/VIP quando o Pix real for aprovado
 - Câmera ao vivo WebRTC em modo beta
 - Sistema de lives fake dentro do app
 - SEO avançado para páginas públicas `/@usuario`
@@ -29,9 +33,37 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
 
+## Assinaturas dos criadores
+
+O botão **Assinar** abre o Creator Club.
+
+Planos:
+
+- Fã: 50 moedas por 30 dias
+- Premium: 150 moedas por 30 dias
+- VIP Criador: 300 moedas por 30 dias
+
+Rotas:
+
+- `GET /api/subscriptions/plans`
+- `GET /api/subscriptions/creators`
+- `GET /api/subscriptions/me`
+- `GET /api/subscriptions/members`
+- `POST /api/subscriptions/creators/:username/subscribe`
+- `POST /api/subscriptions/:id/cancel`
+
+Funcionamento:
+
+- usuário escolhe um plano
+- assina um criador usando moedas internas
+- o criador recebe 70% das moedas
+- assinatura fica ativa por 30 dias
+- renovar soma mais 30 dias quando ainda estiver ativa
+- criador recebe notificação quando alguém assina
+
 ## Checkout real Mercado Pago Pix
 
-A loja agora tenta usar Mercado Pago Pix quando existe token real no ambiente.
+A loja tenta usar Mercado Pago Pix quando existe token real no ambiente.
 
 Variáveis recomendadas:
 
@@ -54,15 +86,6 @@ Rotas:
 - `GET /api/shop/payments`
 - `GET /api/admin/payments`
 
-Funcionamento:
-
-- cria pagamento com `payment_method_id: pix`
-- salva ID externo do Mercado Pago
-- salva QR Code Pix e QR Code base64
-- usuário pode clicar em **Sincronizar Mercado Pago**
-- webhook também sincroniza automaticamente
-- quando o status vira aprovado, o app libera moedas ou VIP
-
 ## Câmera ao vivo WebRTC beta
 
 O botão **Câmera** abre o painel de transmissão real em modo beta.
@@ -78,15 +101,6 @@ Rotas de sinalização:
 - `POST /api/live/webrtc/peers/:id/ice`
 - `GET /api/live/webrtc/peers/:id/ice`
 
-Como usar:
-
-1. Crie uma sala no botão **Ao Vivo**.
-2. Abra o botão **Câmera**.
-3. Clique em **Transmitir** na sala.
-4. Outro usuário abre **Câmera** e clica em **Assistir**.
-
-Observação: esta é uma versão beta P2P. Pode depender de permissões do navegador, HTTPS e compatibilidade de rede.
-
 ## Lives fake
 
 Rotas:
@@ -100,25 +114,12 @@ Rotas:
 - `POST /api/live/rooms/:id/chat`
 - `POST /api/live/rooms/:id/gift`
 
-Tabelas:
-
-- `live_rooms`
-- `live_chat_messages`
-- `live_viewers`
-- `live_webrtc_peers`
-
 ## SEO das páginas públicas
 
 Cada criador tem uma página pública:
 
 ```txt
 /@usuario
-```
-
-Exemplo:
-
-```txt
-/@ghost
 ```
 
 Variável recomendada em produção:
@@ -136,6 +137,7 @@ Eventos cobertos:
 - curtida
 - presente
 - follow
+- assinatura
 
 ## Chat direto
 
@@ -171,7 +173,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V25 tenta converter vídeos automaticamente com ffmpeg.
+A V26 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -195,7 +197,7 @@ VIDEO_PROCESSING=off
 
 ## Storage Supabase
 
-A V25 usa `server/storageProvider.js`.
+A V26 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -234,9 +236,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V25
-npm run server     # apenas backend V13/V25
-npm run server:v13 # apenas backend V13/V25
+npm run dev        # frontend + backend V13/V26
+npm run server     # apenas backend V13/V26
+npm run server:v13 # apenas backend V13/V26
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -266,22 +268,6 @@ Rota:
 
 - `GET /api/feed/recommended`
 
-## Perfil público interno
-
-Formato do link interno:
-
-```txt
-#/@usuario
-```
-
-## Notificações
-
-Rotas:
-
-- `GET /api/notifications`
-- `POST /api/notifications/:id/read`
-- `POST /api/notifications/read-all`
-
 ## Conta demo / admin
 
 ```txt
@@ -289,44 +275,10 @@ usuário: ghost
 senha: 123456
 ```
 
-Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel administrativo.
-
-## API principal
-
-### Autenticação
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `POST /api/auth/logout`
-
-### App
-
-- `GET /api/health`
-- `GET /api/videos`
-- `POST /api/videos`
-- `GET /api/profile`
-- `PUT /api/profile`
-- `POST /api/videos/:id/like`
-- `POST /api/videos/:id/save`
-- `POST /api/videos/:id/follow`
-- `POST /api/videos/:id/share`
-- `POST /api/videos/:id/comments`
-- `POST /api/videos/:id/gift`
-- `POST /api/wallet/recharge`
-- `GET /api/ranking`
-
-### Admin
-
-- `GET /api/admin/summary`
-- `GET /api/admin/users`
-- `GET /api/admin/videos`
-- `POST /api/admin/users/:id/coins`
-- `DELETE /api/admin/videos/:id`
-
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
+- Assinaturas: tabela `creator_subscriptions`
 - Pagamentos: tabela `payments`
 - Lives: tabelas `live_rooms`, `live_chat_messages`, `live_viewers`, `live_webrtc_peers`
 - Mensagens privadas: tabela `direct_messages`
@@ -340,6 +292,6 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Sistema de assinatura dos criadores
-- Melhorias visuais dedicadas para live/câmera
 - Painel financeiro detalhado
+- Melhorias visuais dedicadas para live/câmera
+- Área exclusiva para assinantes
