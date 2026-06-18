@@ -40,6 +40,45 @@ function usernameFromPath() {
   return match?.[1]?.toLowerCase() || "";
 }
 
+function setMeta(name: string, content: string, property = false) {
+  const selector = property ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+  let tag = document.head.querySelector(selector) as HTMLMetaElement | null;
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(property ? "property" : "name", name);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+}
+
+function setCanonical(url: string) {
+  let link = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", "canonical");
+    document.head.appendChild(link);
+  }
+  link.setAttribute("href", url);
+}
+
+function updateCreatorSeo(data: CreatorResponse) {
+  const url = `${window.location.origin}/@${data.profile.user}`;
+  const title = `${data.profile.name} (@${data.profile.user}) no GXST Vibes`;
+  const description = `${data.profile.bio || "Criador no GXST Vibes."} ${data.stats.videos} vídeos, ${data.stats.likes} curtidas e ${data.stats.gifts} presentes.`;
+  document.title = title;
+  setMeta("description", description);
+  setMeta("og:type", "profile", true);
+  setMeta("og:title", title, true);
+  setMeta("og:description", description, true);
+  setMeta("og:url", url, true);
+  setMeta("og:image", data.profile.avatar, true);
+  setMeta("twitter:card", "summary_large_image");
+  setMeta("twitter:title", title);
+  setMeta("twitter:description", description);
+  setMeta("twitter:image", data.profile.avatar);
+  setCanonical(url);
+}
+
 export function CreatorWebPage() {
   const [username, setUsername] = useState(usernameFromPath());
   const [data, setData] = useState<CreatorResponse | null>(null);
@@ -58,7 +97,9 @@ export function CreatorWebPage() {
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) throw new Error(payload?.error || "Perfil não encontrado.");
-      setData(payload as CreatorResponse);
+      const creatorData = payload as CreatorResponse;
+      setData(creatorData);
+      updateCreatorSeo(creatorData);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Erro ao abrir página do criador.");
     } finally {
@@ -80,7 +121,9 @@ export function CreatorWebPage() {
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) throw new Error(payload?.error || "Erro ao seguir.");
-      setData(payload as CreatorResponse);
+      const creatorData = payload as CreatorResponse;
+      setData(creatorData);
+      updateCreatorSeo(creatorData);
     } catch (caught) {
       alert(caught instanceof Error ? caught.message : "Erro ao seguir criador.");
     }
