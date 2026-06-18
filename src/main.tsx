@@ -16,6 +16,7 @@ import { NotificationsPanel } from "./NotificationsPanel";
 import { PublicProfileRouter } from "./PublicProfile";
 import { PublicProfileShortcut } from "./PublicProfileShortcut";
 import { ShopPanel } from "./ShopPanel";
+import { SubscriptionsPanel } from "./SubscriptionsPanel";
 import { ViewTracker } from "./ViewTracker";
 import "./styles.css";
 import "./backend.css";
@@ -42,6 +43,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ModerationPanel />
     <CreatorWallet />
     <ShopPanel />
+    <SubscriptionsPanel />
     <AnalyticsPanel />
     <LiveCommentsPanel />
     <DirectMessagesPanel />
