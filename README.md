@@ -2,11 +2,15 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V20
+## O que já tem na V21
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Notificações push internas em formato toast
+- Alertas na tela para DM, comentário, curtida, presente e follow
+- DM agora também cria notificação no Inbox
+- Toasts com deduplicação local para não repetir alerta antigo
 - Chat direto entre usuários
 - Botão flutuante **Chat**
 - Inbox privado com conversas
@@ -14,26 +18,39 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Envio de mensagem privada sem recarregar
 - Atualização automática das mensagens por polling leve
 - Contador de mensagens não lidas
-- Marcação de conversa como lida
 - Comentários em tempo real por polling leve
-- Botão flutuante **Comentários**
 - Sistema de visualizações reais por vídeo
 - Tracker automático de views no frontend
-- Views entrando nas métricas e no Feed IA
 - Painel de métricas avançadas
 - Conversão automática opcional de vídeo com ffmpeg
 - Página pública externa dos criadores em `/@usuario`
 - Storage real com suporte a Supabase Storage
 - Loja de moedas e VIP
-- Gateway fake PIX para simular compra
 - Carteira de criador
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
-- Notificações reais com tabela SQLite
+
+## Push interno
+
+O app agora mostra alertas visuais no canto da tela quando chegam eventos novos.
+
+Eventos cobertos:
+
+- mensagem privada
+- comentário
+- curtida
+- presente
+- follow
+
+Como funciona:
+
+- o frontend consulta `/api/notifications`
+- também consulta `/api/dm/threads` para mensagens privadas não lidas
+- cada alerta é salvo localmente como visto para não ficar repetindo
+- as notificações continuam aparecendo no botão **Inbox**
+- DMs novas também criam notificação do tipo `dm`
 
 ## Chat direto
-
-O botão **Chat** abre o inbox privado do usuário.
 
 Rotas:
 
@@ -42,14 +59,6 @@ Rotas:
 - `GET /api/dm/thread/:username`
 - `POST /api/dm/thread/:username`
 - `POST /api/dm/thread/:username/read`
-
-Como funciona:
-
-- cada mensagem fica salva na tabela `direct_messages`
-- usuários podem buscar outros perfis pelo @ ou nome
-- conversas mostram a última mensagem e contador de não lidas
-- a conversa aberta atualiza automaticamente
-- ao abrir a conversa, as mensagens recebidas são marcadas como lidas
 
 ## Comentários em tempo real
 
@@ -66,8 +75,6 @@ Rotas:
 - `POST /api/videos/:id/view`
 - `GET /api/videos/:id/views`
 
-O tracker observa os elementos `<video>` e registra view quando o vídeo aparece ou toca.
-
 ## Métricas avançadas
 
 Rotas:
@@ -77,7 +84,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V20 tenta converter vídeos automaticamente com ffmpeg.
+A V21 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -125,7 +132,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V20 usa `server/storageProvider.js`.
+A V21 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -164,9 +171,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V20
-npm run server     # apenas backend V13/V20
-npm run server:v13 # apenas backend V13/V20
+npm run dev        # frontend + backend V13/V21
+npm run server     # apenas backend V13/V21
+npm run server:v13 # apenas backend V13/V21
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -258,6 +265,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 
 - Banco SQLite: `server/data/gxst.sqlite`
 - Mensagens privadas: tabela `direct_messages`
+- Notificações: tabela `notifications`
 - Comentários: tabela `comments`
 - Views: tabela `video_views`
 - Upload local: `uploads/`
@@ -270,4 +278,4 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 - Integração com gateway real
 - SEO avançado para páginas públicas
-- Notificações push internas
+- Sistema de chamadas/ao vivo
