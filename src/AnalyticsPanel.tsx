@@ -4,6 +4,7 @@ import { BarChart3, Crown, Eye, Gift, Heart, RefreshCw, TrendingUp, Video, X } f
 
 type Summary = {
   videos: number;
+  views: number;
   likes: number;
   comments: number;
   shares: number;
@@ -18,6 +19,7 @@ type Summary = {
 type TimelinePoint = {
   day: string;
   videos: number;
+  views: number;
   comments: number;
 };
 
@@ -26,6 +28,7 @@ type TopVideo = {
   user: string;
   caption: string;
   videoUrl: string;
+  views: number;
   likes: number;
   comments: number;
   gifts: number;
@@ -44,6 +47,7 @@ type AdminAnalytics = {
     user: string;
     name: string;
     videos: number;
+    views: number;
     likes: number;
     comments: number;
     shares: number;
@@ -138,10 +142,10 @@ export function AnalyticsPanel() {
                   <h3>Minha conta</h3>
                   <div className="analytics-grid">
                     <Metric icon={<Video />} label="Vídeos" value={creator.summary.videos} />
+                    <Metric icon={<Eye />} label="Views" value={creator.summary.views} />
                     <Metric icon={<Heart />} label="Curtidas" value={creator.summary.likes} />
                     <Metric icon={<Gift />} label="Presentes" value={creator.summary.gifts} />
                     <Metric icon={<Crown />} label="Score" value={creator.summary.score} />
-                    <Metric icon={<Eye />} label="Ganhos" value={creator.summary.estimatedEarnings} />
                     <Metric icon={<BarChart3 />} label="Pagos" value={creator.summary.paidPayments} />
                   </div>
                 </section>
@@ -152,7 +156,7 @@ export function AnalyticsPanel() {
                     {creator.timeline.map((item) => (
                       <div className="timeline-row" key={item.day}>
                         <strong>{item.day.slice(5)}</strong>
-                        <span>Vídeos {item.videos}</span>
+                        <span>Views {item.views}</span>
                         <span>Comentários {item.comments}</span>
                       </div>
                     ))}
@@ -172,18 +176,18 @@ export function AnalyticsPanel() {
                 <h3>Admin geral</h3>
                 <div className="analytics-grid">
                   <Metric icon={<Video />} label="Vídeos" value={admin.totals.videos || 0} />
+                  <Metric icon={<Eye />} label="Views" value={admin.totals.views || 0} />
                   <Metric icon={<Heart />} label="Curtidas" value={admin.totals.likes || 0} />
-                  <Metric icon={<Gift />} label="Presentes" value={admin.totals.gifts || 0} />
                   <Metric icon={<BarChart3 />} label="Pagamentos" value={admin.totals.paidPayments || 0} />
                   <Metric icon={<Crown />} label="Receita" value={money(admin.totals.revenue || 0)} />
-                  <Metric icon={<Eye />} label="Denúncias" value={admin.totals.openReports || 0} />
+                  <Metric icon={<Gift />} label="Denúncias" value={admin.totals.openReports || 0} />
                 </div>
 
                 <h3>Top criadores</h3>
                 {admin.topCreators.map((creator) => (
                   <div className="creator-rank-row" key={creator.user}>
                     <strong>@{creator.user}</strong>
-                    <span>{creator.score} pts • {creator.videos} vídeos • {creator.gifts} presentes</span>
+                    <span>{creator.score} pts • {creator.views} views • {creator.videos} vídeos</span>
                   </div>
                 ))}
               </section>
@@ -211,7 +215,7 @@ function VideoRow({ video }: { video: TopVideo }) {
       <video src={video.videoUrl} muted playsInline preload="metadata" />
       <div>
         <strong>{video.caption}</strong>
-        <small>{video.performanceScore} pts • {video.likes} curtidas • {video.gifts} presentes</small>
+        <small>{video.performanceScore} pts • {video.views} views • {video.likes} curtidas</small>
       </div>
     </div>
   );
