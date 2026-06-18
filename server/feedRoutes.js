@@ -2,6 +2,7 @@ import { registerAnalyticsRoutes } from "./analyticsRoutes.js";
 import { registerModerationRoutes } from "./moderationRoutes.js";
 import { registerMonetizationRoutes } from "./monetizationRoutes.js";
 import { registerPaymentRoutes } from "./paymentRoutes.js";
+import { registerViewRoutes } from "./viewRoutes.js";
 import { fromJson, rowToVideo, scoreVideo, sqlite } from "./sqliteStore.js";
 
 let extraRoutesRegistered = false;
@@ -33,7 +34,7 @@ function algorithmScore(row, viewer, interests) {
 
   let score = 0;
   const reasons = [];
-  const engagement = scoreVideo(row);
+  const engagement = scoreVideo(row) + Number(row.views || 0) * 0.5;
   const freshness = Math.max(0, 35 - daysSince(row.created_at));
 
   score += engagement * 0.08;
@@ -53,6 +54,11 @@ function algorithmScore(row, viewer, interests) {
   if (matchedTags.length) {
     score += matchedTags.reduce((sum, tag) => sum + interests.tags.get(tag) * 22, 0);
     reasons.push(`hashtags parecidas: ${matchedTags.slice(0, 2).map((tag) => `#${tag}`).join(", ")}`);
+  }
+
+  if (Number(row.views || 0) > 0) {
+    score += Number(row.views || 0) * 0.15;
+    reasons.push("vídeo sendo assistido");
   }
 
   if (Number(row.gifts || 0) > 0) {
@@ -77,6 +83,7 @@ export function registerFeedRoutes(app, getAuthUser) {
     registerMonetizationRoutes(app, getAuthUser);
     registerPaymentRoutes(app, getAuthUser);
     registerAnalyticsRoutes(app, getAuthUser);
+    registerViewRoutes(app, getAuthUser);
     extraRoutesRegistered = true;
   }
 
@@ -91,6 +98,7 @@ export function registerFeedRoutes(app, getAuthUser) {
         const rankedItem = algorithmScore(row, viewer, interests);
         return {
           ...rowToVideo(row, viewer),
+          views: Number(row.views || 0),
           algorithmScore: Math.round(rankedItem.score),
           reason: rankedItem.reasons[0],
           reasons: rankedItem.reasons
