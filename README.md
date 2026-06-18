@@ -2,11 +2,15 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V14
+## O que já tem na V15
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Página pública externa dos criadores em `/@usuario`
+- Vitrine pública com perfil, estatísticas e vídeos
+- Botões de seguir, compartilhar e abrir no app
+- Link externo exemplo: `/@ghost`
 - Storage real com suporte a Supabase Storage
 - Upload local como fallback automático
 - Loja de moedas e VIP
@@ -28,10 +32,8 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Sessão por token salvo no navegador
 - Usuários múltiplos
 - Perfil editável por usuário logado
-- Página pública de perfil por link `#/@usuario`
+- Página pública interna por link `#/@usuario`
 - Botão **Meu perfil** para abrir o perfil público do usuário logado
-- Compartilhamento de perfil público
-- Seguir perfil pela página pública
 - Feed IA com algoritmo de recomendação
 - Botão flutuante **Feed IA**
 - Notificações reais com tabela SQLite
@@ -45,6 +47,38 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Ranking de criadores por pontuação
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
+
+## Página pública externa
+
+Cada criador agora pode ter uma página externa:
+
+```txt
+/@usuario
+```
+
+Exemplo:
+
+```txt
+/@ghost
+```
+
+Essa página mostra:
+
+- avatar
+- nome
+- usuário
+- bio
+- estatísticas
+- vitrine de vídeos
+- botão seguir
+- botão compartilhar
+- botão abrir no app
+
+A página usa a rota pública já existente:
+
+```txt
+GET /api/public/profile/:user
+```
 
 ## Loja / Pagamentos
 
@@ -68,7 +102,7 @@ Produtos iniciais:
 
 ## Storage Supabase
 
-A V13/V14 usa `server/storageProvider.js`.
+A V13/V14/V15 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -107,9 +141,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V14
-npm run server     # apenas backend V13/V14
-npm run server:v13 # apenas backend V13/V14
+npm run dev        # frontend + backend V13/V15
+npm run server     # apenas backend V13/V15
+npm run server:v13 # apenas backend V13/V15
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -139,9 +173,9 @@ Rota:
 
 - `GET /api/feed/recommended`
 
-## Perfil público
+## Perfil público interno
 
-Formato do link:
+Formato do link interno:
 
 ```txt
 #/@usuario
@@ -216,5 +250,5 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 ## Próximas melhorias
 
 - Integração com gateway real
-- Página web externa dos criadores
 - Conversão automática de vídeo para formato leve
+- SEO avançado para páginas públicas
