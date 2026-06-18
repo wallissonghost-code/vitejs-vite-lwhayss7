@@ -2,11 +2,14 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V15
+## O que já tem na V16
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Conversão automática opcional de vídeo com ffmpeg
+- Fallback automático caso ffmpeg não esteja disponível
+- Saída MP4 leve para feed vertical
 - Página pública externa dos criadores em `/@usuario`
 - Vitrine pública com perfil, estatísticas e vídeos
 - Botões de seguir, compartilhar e abrir no app
@@ -33,24 +36,42 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Usuários múltiplos
 - Perfil editável por usuário logado
 - Página pública interna por link `#/@usuario`
-- Botão **Meu perfil** para abrir o perfil público do usuário logado
 - Feed IA com algoritmo de recomendação
-- Botão flutuante **Feed IA**
 - Notificações reais com tabela SQLite
-- Botão flutuante **Inbox** com contador de não lidas
 - Sistema de denúncia de vídeos
-- Botão flutuante **Denunciar**
 - Carteira de criador
-- Botão flutuante **Carteira**
 - Pedido de saque fake com chave PIX
-- Admin `ghost` pode aprovar ou recusar saques
 - Ranking de criadores por pontuação
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
 
+## Conversão de vídeo
+
+A V16 tenta converter vídeos automaticamente com ffmpeg.
+
+Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
+
+Variáveis:
+
+| Variável | Função | Padrão |
+|---|---|---|
+| `VIDEO_PROCESSING` | Liga/desliga conversão | `auto` |
+| `FFMPEG_BIN` | Caminho do ffmpeg | `ffmpeg` |
+| `VIDEO_SCALE` | Escala do vídeo | `scale=720:-2` |
+| `VIDEO_CRF` | Compressão H.264 | `28` |
+| `FFMPEG_PRESET` | Velocidade do encode | `veryfast` |
+| `AUDIO_BITRATE` | Bitrate do áudio | `96k` |
+| `FFMPEG_TIMEOUT_MS` | Tempo máximo de conversão | `180000` |
+
+Para desligar:
+
+```txt
+VIDEO_PROCESSING=off
+```
+
 ## Página pública externa
 
-Cada criador agora pode ter uma página externa:
+Cada criador pode ter uma página externa:
 
 ```txt
 /@usuario
@@ -62,27 +83,9 @@ Exemplo:
 /@ghost
 ```
 
-Essa página mostra:
-
-- avatar
-- nome
-- usuário
-- bio
-- estatísticas
-- vitrine de vídeos
-- botão seguir
-- botão compartilhar
-- botão abrir no app
-
-A página usa a rota pública já existente:
-
-```txt
-GET /api/public/profile/:user
-```
+Essa página mostra avatar, nome, bio, estatísticas, vídeos, seguir, compartilhar e abrir no app.
 
 ## Loja / Pagamentos
-
-A loja usa gateway fake PIX para simular compra de moedas e VIP.
 
 Rotas:
 
@@ -92,17 +95,9 @@ Rotas:
 - `GET /api/shop/payments`
 - `GET /api/admin/payments`
 
-Produtos iniciais:
-
-- 100 moedas
-- 500 moedas
-- 1200 moedas
-- VIP Mensal
-- VIP 3 Meses
-
 ## Storage Supabase
 
-A V13/V14/V15 usa `server/storageProvider.js`.
+A V16 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -141,9 +136,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V15
-npm run server     # apenas backend V13/V15
-npm run server:v13 # apenas backend V13/V15
+npm run dev        # frontend + backend V13/V16
+npm run server     # apenas backend V13/V16
+npm run server:v13 # apenas backend V13/V16
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -179,12 +174,6 @@ Formato do link interno:
 
 ```txt
 #/@usuario
-```
-
-Exemplo:
-
-```txt
-#/@ghost
 ```
 
 ## Notificações
@@ -250,5 +239,5 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 ## Próximas melhorias
 
 - Integração com gateway real
-- Conversão automática de vídeo para formato leve
 - SEO avançado para páginas públicas
+- Painel de métricas avançadas
