@@ -1,6 +1,8 @@
 import multer from "multer";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { spawn } from "node:child_process";
 
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".m4v", ".avi", ".mkv"]);
 
@@ -19,9 +21,9 @@ function fileExtension(file) {
   return VIDEO_EXTENSIONS.has(originalExt) ? originalExt : ".mp4";
 }
 
-function makeFileName(file) {
-  const ext = fileExtension(file);
-  const base = cleanBaseName(path.basename(file?.originalname || "video", ext));
+function makeFileName(file, forceExt = "") {
+  const ext = forceExt || fileExtension(file);
+  const base = cleanBaseName(path.basename(file?.originalname || "video", path.extname(file?.originalname || "")));
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return `${stamp}-${base}${ext}`;
 }
@@ -43,6 +45,97 @@ function normalizeBaseUrl(value = "") {
   return String(value || "").trim().replace(/\/$/, "");
 }
 
+function shouldProcessVideos() {
+  const mode = String(process.env.VIDEO_PROCESSING || "auto").toLowerCase();
+  return !["off", "false", "0", "disabled"].includes(mode);
+}
+
+function ffmpegBin() {
+  return process.env.FFMPEG_BIN || "ffmpeg";
+}
+
+function runFfmpeg(inputPath, outputPath) {
+  const timeoutMs = Math.max(15000, Number(process.env.FFMPEG_TIMEOUT_MS || 180000));
+  const args = [
+    "-y",
+    "-i",
+    inputPath,
+    "-vf",
+    process.env.VIDEO_SCALE || "scale=720:-2",
+    "-c:v",
+    "libx264",
+    "-preset",
+    process.env.FFMPEG_PRESET || "veryfast",
+    "-crf",
+    String(process.env.VIDEO_CRF || 28),
+    "-c:a",
+    "aac",
+    "-b:a",
+    process.env.AUDIO_BITRATE || "96k",
+    "-movflags",
+    "+faststart",
+    outputPath
+  ];
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(ffmpegBin(), args, { stdio: ["ignore", "ignore", "pipe"] });
+    let errorLog = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("Tempo limite ao converter vídeo."));
+    }, timeoutMs);
+
+    child.stderr.on("data", (chunk) => {
+      errorLog = `${errorLog}${chunk}`.slice(-3000);
+    });
+
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) return resolve(outputPath);
+      reject(new Error(errorLog || `ffmpeg finalizou com código ${code}`));
+    });
+  });
+}
+
+async function convertLocalFile(inputPath, outputPath) {
+  if (!shouldProcessVideos()) return null;
+  try {
+    await runFfmpeg(inputPath, outputPath);
+    const stat = await fs.promises.stat(outputPath);
+    return stat.size > 0 ? outputPath : null;
+  } catch (error) {
+    console.warn("[GXST] Conversão de vídeo ignorada:", error.message);
+    return null;
+  }
+}
+
+async function fileToProcessedBuffer(file) {
+  if (!shouldProcessVideos() || !file?.buffer) return file;
+  const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gxst-video-"));
+  const inputPath = path.join(tempDir, makeFileName(file));
+  const outputPath = path.join(tempDir, makeFileName(file, ".mp4"));
+
+  try {
+    await fs.promises.writeFile(inputPath, file.buffer);
+    const convertedPath = await convertLocalFile(inputPath, outputPath);
+    if (!convertedPath) return file;
+    const buffer = await fs.promises.readFile(convertedPath);
+    return {
+      ...file,
+      buffer,
+      originalname: path.basename(outputPath),
+      mimetype: "video/mp4"
+    };
+  } finally {
+    fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 function requireSupabaseConfig() {
   const supabaseUrl = normalizeBaseUrl(process.env.SUPABASE_URL);
   const serviceKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
@@ -56,9 +149,10 @@ function requireSupabaseConfig() {
 }
 
 async function uploadToSupabase(file) {
+  const processedFile = await fileToProcessedBuffer(file);
   const { supabaseUrl, serviceKey, bucket } = requireSupabaseConfig();
   const folder = cleanBaseName(process.env.SUPABASE_FOLDER || "videos");
-  const objectName = `${folder}/${makeFileName(file)}`;
+  const objectName = `${folder}/${makeFileName(processedFile)}`;
   const url = `${supabaseUrl}/storage/v1/object/${bucket}/${encodeURIComponent(objectName).replace(/%2F/g, "/")}`;
 
   const response = await fetch(url, {
@@ -66,10 +160,10 @@ async function uploadToSupabase(file) {
     headers: {
       Authorization: `Bearer ${serviceKey}`,
       apikey: serviceKey,
-      "Content-Type": file.mimetype || "video/mp4",
+      "Content-Type": processedFile.mimetype || "video/mp4",
       "x-upsert": "false"
     },
-    body: file.buffer
+    body: processedFile.buffer
   });
 
   if (!response.ok) {
@@ -85,6 +179,7 @@ async function uploadToSupabase(file) {
 export function createStorageProvider(rootDir) {
   const driver = String(process.env.STORAGE_DRIVER || "local").toLowerCase();
   const maxUploadMb = Math.max(1, Number(process.env.MAX_UPLOAD_MB || 200));
+  const videoProcessing = shouldProcessVideos() ? "auto" : "off";
 
   if (driver === "supabase") {
     const upload = multer({
@@ -103,6 +198,7 @@ export function createStorageProvider(rootDir) {
       config: {
         driver,
         maxUploadMb,
+        videoProcessing,
         bucket: process.env.SUPABASE_BUCKET || "gxst-videos",
         folder: process.env.SUPABASE_FOLDER || "videos"
       }
@@ -129,12 +225,18 @@ export function createStorageProvider(rootDir) {
     upload,
     async saveFile(file) {
       if (!file?.filename) return "";
-      const localPath = `/uploads/${file.filename}`;
+      const convertedName = makeFileName(file, ".mp4");
+      const convertedPath = path.join(uploadsDir, convertedName);
+      const processedPath = await convertLocalFile(file.path, convertedPath);
+      const finalName = processedPath ? convertedName : file.filename;
+      if (processedPath && file.path !== processedPath) fs.promises.rm(file.path, { force: true }).catch(() => {});
+      const localPath = `/uploads/${finalName}`;
       return publicUploadBaseUrl ? `${publicUploadBaseUrl}${localPath}` : localPath;
     },
     config: {
       driver: "local",
       maxUploadMb,
+      videoProcessing,
       uploadsDir,
       publicUploadBaseUrl: publicUploadBaseUrl || "local"
     }
