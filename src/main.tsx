@@ -9,6 +9,7 @@ import { CreatorWebPage } from "./CreatorWebPage";
 import { DirectMessagesPanel } from "./DirectMessagesPanel";
 import { InternalPushAlerts } from "./InternalPushAlerts";
 import { LiveCommentsPanel } from "./LiveCommentsPanel";
+import { LiveRoomsPanel } from "./LiveRoomsPanel";
 import { ModerationPanel } from "./ModerationPanel";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { PublicProfileRouter } from "./PublicProfile";
@@ -43,6 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <AnalyticsPanel />
     <LiveCommentsPanel />
     <DirectMessagesPanel />
+    <LiveRoomsPanel />
     <InternalPushAlerts />
     <ViewTracker />
     <PublicProfileRouter />
