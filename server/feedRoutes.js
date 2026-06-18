@@ -1,5 +1,6 @@
 import { registerModerationRoutes } from "./moderationRoutes.js";
 import { registerMonetizationRoutes } from "./monetizationRoutes.js";
+import { registerPaymentRoutes } from "./paymentRoutes.js";
 import { fromJson, rowToVideo, scoreVideo, sqlite } from "./sqliteStore.js";
 
 let extraRoutesRegistered = false;
@@ -73,6 +74,7 @@ export function registerFeedRoutes(app, getAuthUser) {
   if (!extraRoutesRegistered) {
     registerModerationRoutes(app, getAuthUser);
     registerMonetizationRoutes(app, getAuthUser);
+    registerPaymentRoutes(app, getAuthUser);
     extraRoutesRegistered = true;
   }
 
