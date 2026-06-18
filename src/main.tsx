@@ -4,6 +4,7 @@ import App from "./App";
 import { AdminFloatingPanel } from "./AdminFloatingPanel";
 import { AlgorithmFeed } from "./AlgorithmFeed";
 import { AnalyticsPanel } from "./AnalyticsPanel";
+import { CameraBetaPanel } from "./CameraBetaPanel";
 import { CreatorWallet } from "./CreatorWallet";
 import { CreatorWebPage } from "./CreatorWebPage";
 import { DirectMessagesPanel } from "./DirectMessagesPanel";
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <LiveCommentsPanel />
     <DirectMessagesPanel />
     <LiveRoomsPanel />
+    <CameraBetaPanel />
     <InternalPushAlerts />
     <ViewTracker />
     <PublicProfileRouter />
