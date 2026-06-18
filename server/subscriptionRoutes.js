@@ -68,17 +68,38 @@ function subscriptionPayload(row) {
   };
 }
 
-function creatorStats(userId) {
-  const videos = sqlite.prepare("SELECT COUNT(*) AS total FROM videos WHERE user_id = ?").get(userId).total;
+function creatorStats(userId, username) {
+  const videos = sqlite.prepare("SELECT COUNT(*) AS total FROM videos WHERE user_id = ? OR user = ?").get(userId, username).total;
   const subs = sqlite.prepare("SELECT COUNT(*) AS total FROM creator_subscriptions WHERE creator_user_id = ? AND status = 'active' AND current_period_end > ?").get(userId, new Date().toISOString()).total;
   return { videos: Number(videos || 0), subscribers: Number(subs || 0) };
 }
 
+function ensureVideoCreators() {
+  const rows = sqlite.prepare("SELECT user, name, avatar FROM videos GROUP BY user ORDER BY id DESC LIMIT 30").all();
+  rows.forEach((row) => {
+    const username = cleanUsername(row.user);
+    if (!username || getUserByUsername(username)) return;
+    const name = row.name || username;
+    const avatar = row.avatar || `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
+    try {
+      sqlite.prepare(`
+        INSERT INTO users (user, name, bio, avatar, coins, followers, following_users, liked_videos, saved_videos, password_hash, created_at)
+        VALUES (?, ?, ?, ?, 0, 0, '[]', '[]', '[]', '', ?)
+      `).run(username, name, "Criador de exemplo do GXST Vibes.", avatar, new Date().toISOString());
+      const created = getUserByUsername(username);
+      if (created) sqlite.prepare("UPDATE videos SET user_id = ? WHERE user = ?").run(created.id, username);
+    } catch {
+      // ignore seed creator conflicts
+    }
+  });
+}
+
 function creatorList() {
+  ensureVideoCreators();
   const rows = sqlite.prepare(`
     SELECT users.*
     FROM users
-    WHERE EXISTS (SELECT 1 FROM videos WHERE videos.user_id = users.id)
+    WHERE EXISTS (SELECT 1 FROM videos WHERE videos.user_id = users.id OR videos.user = users.user)
     ORDER BY followers DESC, id DESC
     LIMIT 50
   `).all();
@@ -96,7 +117,7 @@ function creatorList() {
       likedVideos: [],
       savedVideos: []
     }),
-    stats: creatorStats(row.id)
+    stats: creatorStats(row.id, row.user)
   }));
 }
 
@@ -143,6 +164,7 @@ export function registerSubscriptionRoutes(app, getAuthUser) {
   });
 
   app.post("/api/subscriptions/creators/:username/subscribe", requireAuth, (req, res) => {
+    ensureVideoCreators();
     const creator = getUserByUsername(cleanUsername(req.params.username));
     if (!creator) return res.status(404).json({ error: "Criador não encontrado." });
     if (creator.id === req.user.id) return res.status(400).json({ error: "Você não pode assinar você mesmo." });
