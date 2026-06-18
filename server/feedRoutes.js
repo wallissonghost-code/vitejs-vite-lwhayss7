@@ -1,4 +1,5 @@
 import { registerAnalyticsRoutes } from "./analyticsRoutes.js";
+import { registerDirectMessageRoutes } from "./directMessageRoutes.js";
 import { registerLiveCommentRoutes } from "./liveCommentRoutes.js";
 import { registerModerationRoutes } from "./moderationRoutes.js";
 import { registerMonetizationRoutes } from "./monetizationRoutes.js";
@@ -86,6 +87,7 @@ export function registerFeedRoutes(app, getAuthUser) {
     registerAnalyticsRoutes(app, getAuthUser);
     registerViewRoutes(app, getAuthUser);
     registerLiveCommentRoutes(app, getAuthUser);
+    registerDirectMessageRoutes(app, getAuthUser);
     extraRoutesRegistered = true;
   }
 
