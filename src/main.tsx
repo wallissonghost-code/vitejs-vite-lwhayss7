@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AdminFloatingPanel } from "./AdminFloatingPanel";
 import { AlgorithmFeed } from "./AlgorithmFeed";
+import { AnalyticsPanel } from "./AnalyticsPanel";
 import { CreatorWallet } from "./CreatorWallet";
 import { CreatorWebPage } from "./CreatorWebPage";
 import { ModerationPanel } from "./ModerationPanel";
@@ -20,6 +21,7 @@ import "./moderation.css";
 import "./wallet.css";
 import "./shop.css";
 import "./creator-page.css";
+import "./analytics.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -31,6 +33,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ModerationPanel />
     <CreatorWallet />
     <ShopPanel />
+    <AnalyticsPanel />
     <PublicProfileRouter />
     <CreatorWebPage />
   </React.StrictMode>
