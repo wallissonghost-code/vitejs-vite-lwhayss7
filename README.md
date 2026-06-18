@@ -2,23 +2,21 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V24
+## O que já tem na V25
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Checkout real Mercado Pago Pix para moedas e VIP
+- Fallback automático para Pix fake quando não houver token
+- QR Code Pix real na Loja
+- Código copia-e-cola Pix real
+- Link/ticket Pix quando retornado pelo Mercado Pago
+- Sincronização de status do pagamento real
+- Webhook Mercado Pago para atualizar pagamento aprovado
+- Liberação automática de moedas/VIP quando o Pix real for aprovado
 - Câmera ao vivo WebRTC em modo beta
-- Botão flutuante **Câmera**
-- Criador pode abrir câmera e microfone pelo navegador
-- Espectador pode entrar como viewer WebRTC
-- Sinalização WebRTC por polling: offer, answer e ICE
-- STUN público para conexão P2P
 - Sistema de lives fake dentro do app
-- Botão flutuante **Ao Vivo**
-- Criação de sala ao vivo
-- Chat da live com atualização automática
-- Envio de presentes em moedas na live
-- Ranking de salas por espectadores e presentes
 - SEO avançado para páginas públicas `/@usuario`
 - Notificações push internas em formato toast
 - Chat direto entre usuários
@@ -27,10 +25,43 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Painel de métricas avançadas
 - Conversão automática opcional de vídeo com ffmpeg
 - Storage real com suporte a Supabase Storage
-- Loja de moedas e VIP
 - Carteira de criador
 - Sistema de denúncia de vídeos
 - Feed IA com algoritmo de recomendação
+
+## Checkout real Mercado Pago Pix
+
+A loja agora tenta usar Mercado Pago Pix quando existe token real no ambiente.
+
+Variáveis recomendadas:
+
+```txt
+MERCADO_PAGO_ACCESS_TOKEN=APP_USR-...
+PAYMENT_GATEWAY=mercado_pago_pix
+MERCADO_PAGO_WEBHOOK_URL=https://seudominio.com/api/shop/mercadopago/webhook
+MERCADO_PAGO_DEFAULT_PAYER_EMAIL=comprador@seudominio.com
+```
+
+Sem `MERCADO_PAGO_ACCESS_TOKEN`, o app continua usando Pix fake para teste.
+
+Rotas:
+
+- `GET /api/shop/products`
+- `POST /api/shop/checkout`
+- `POST /api/shop/payments/:id/simulate-paid`
+- `POST /api/shop/payments/:id/sync`
+- `POST /api/shop/mercadopago/webhook`
+- `GET /api/shop/payments`
+- `GET /api/admin/payments`
+
+Funcionamento:
+
+- cria pagamento com `payment_method_id: pix`
+- salva ID externo do Mercado Pago
+- salva QR Code Pix e QR Code base64
+- usuário pode clicar em **Sincronizar Mercado Pago**
+- webhook também sincroniza automaticamente
+- quando o status vira aprovado, o app libera moedas ou VIP
 
 ## Câmera ao vivo WebRTC beta
 
@@ -69,7 +100,7 @@ Rotas:
 - `POST /api/live/rooms/:id/chat`
 - `POST /api/live/rooms/:id/gift`
 
-Tabelas novas:
+Tabelas:
 
 - `live_rooms`
 - `live_chat_messages`
@@ -89,15 +120,6 @@ Exemplo:
 ```txt
 /@ghost
 ```
-
-O servidor injeta meta tags no HTML em produção:
-
-- `<title>` dinâmico
-- `meta description`
-- `link canonical`
-- Open Graph
-- Twitter Card
-- JSON-LD `Person`
 
 Variável recomendada em produção:
 
@@ -149,7 +171,7 @@ Rotas:
 
 ## Conversão de vídeo
 
-A V24 tenta converter vídeos automaticamente com ffmpeg.
+A V25 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -171,19 +193,9 @@ Para desligar:
 VIDEO_PROCESSING=off
 ```
 
-## Loja / Pagamentos
-
-Rotas:
-
-- `GET /api/shop/products`
-- `POST /api/shop/checkout`
-- `POST /api/shop/payments/:id/simulate-paid`
-- `GET /api/shop/payments`
-- `GET /api/admin/payments`
-
 ## Storage Supabase
 
-A V24 usa `server/storageProvider.js`.
+A V25 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -222,9 +234,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V24
-npm run server     # apenas backend V13/V24
-npm run server:v13 # apenas backend V13/V24
+npm run dev        # frontend + backend V13/V25
+npm run server     # apenas backend V13/V25
+npm run server:v13 # apenas backend V13/V25
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -315,6 +327,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
+- Pagamentos: tabela `payments`
 - Lives: tabelas `live_rooms`, `live_chat_messages`, `live_viewers`, `live_webrtc_peers`
 - Mensagens privadas: tabela `direct_messages`
 - Notificações: tabela `notifications`
@@ -322,12 +335,11 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 - Views: tabela `video_views`
 - Upload local: `uploads/`
 - Upload Supabase: bucket configurado em `SUPABASE_BUCKET`
-- Pagamentos: tabela `payments`
 
 Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Checkout real de moedas/VIP
 - Sistema de assinatura dos criadores
 - Melhorias visuais dedicadas para live/câmera
+- Painel financeiro detalhado
