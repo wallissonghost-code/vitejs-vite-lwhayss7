@@ -11,6 +11,7 @@ import { NotificationsPanel } from "./NotificationsPanel";
 import { PublicProfileRouter } from "./PublicProfile";
 import { PublicProfileShortcut } from "./PublicProfileShortcut";
 import { ShopPanel } from "./ShopPanel";
+import { ViewTracker } from "./ViewTracker";
 import "./styles.css";
 import "./backend.css";
 import "./admin.css";
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <CreatorWallet />
     <ShopPanel />
     <AnalyticsPanel />
+    <ViewTracker />
     <PublicProfileRouter />
     <CreatorWebPage />
   </React.StrictMode>
