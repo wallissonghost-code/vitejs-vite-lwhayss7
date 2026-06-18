@@ -1,3 +1,4 @@
+import { registerAnalyticsRoutes } from "./analyticsRoutes.js";
 import { registerModerationRoutes } from "./moderationRoutes.js";
 import { registerMonetizationRoutes } from "./monetizationRoutes.js";
 import { registerPaymentRoutes } from "./paymentRoutes.js";
@@ -75,6 +76,7 @@ export function registerFeedRoutes(app, getAuthUser) {
     registerModerationRoutes(app, getAuthUser);
     registerMonetizationRoutes(app, getAuthUser);
     registerPaymentRoutes(app, getAuthUser);
+    registerAnalyticsRoutes(app, getAuthUser);
     extraRoutesRegistered = true;
   }
 
