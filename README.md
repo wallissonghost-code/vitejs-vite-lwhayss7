@@ -2,17 +2,25 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V13
+## O que já tem na V14
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
-- Servidor principal atualizado para `server/v13.js`
+- Servidor principal `server/v13.js`
 - Storage real com suporte a Supabase Storage
 - Upload local como fallback automático
+- Loja de moedas e VIP
+- Botão flutuante **Loja**
+- Gateway fake PIX para simular compra
+- Pacotes de moedas
+- Planos VIP
+- Histórico de pagamentos do usuário
+- Painel admin de pagamentos para `ghost`
+- Pagamento fake libera moedas ou VIP automaticamente
+- Tabela SQLite de pagamentos
 - Upload com nome limpo e extensão preservada
 - Configuração de storage por variáveis de ambiente
 - Suporte a `STORAGE_DRIVER=local` ou `STORAGE_DRIVER=supabase`
-- Suporte a bucket/folder do Supabase
 - Health check com dados de storage em `GET /api/health`
 - Banco SQLite real usando `better-sqlite3`
 - Login e cadastro com usuário/senha
@@ -26,42 +34,41 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Seguir perfil pela página pública
 - Feed IA com algoritmo de recomendação
 - Botão flutuante **Feed IA**
-- Recomendações por curtidas, salvos, seguindo, hashtags, presentes, comentários e recência
-- Explicação do motivo da recomendação em cada vídeo
 - Notificações reais com tabela SQLite
 - Botão flutuante **Inbox** com contador de não lidas
-- Notificações de comentário, curtida, presente e seguidor
-- Marcar uma notificação como lida
-- Marcar todas como lidas
 - Sistema de denúncia de vídeos
 - Botão flutuante **Denunciar**
-- Tabela SQLite de denúncias
-- Painel admin de denúncias para a conta `ghost`
-- Admin pode marcar denúncia como revisada
-- Admin pode dispensar denúncia
-- Admin pode remover vídeo denunciado
 - Carteira de criador
 - Botão flutuante **Carteira**
-- Cálculo de ganhos fake por presentes recebidos
-- Saldo disponível, pendente e pago
 - Pedido de saque fake com chave PIX
-- Tabela SQLite de pedidos de saque
 - Admin `ghost` pode aprovar ou recusar saques
-- Vídeos vinculados ao criador logado
-- Tabelas SQLite para usuários, sessões, vídeos, comentários, notificações, denúncias e saques
-- API de vídeos, perfil, comentários, seguir, salvar, compartilhar, ranking, carteira, presentes, moderação e monetização
-- Painel admin para a conta `ghost`
-- Vídeos com autoplay, legenda, música e hashtags
-- Curtir, salvar, comentar, compartilhar e seguir
-- Presentes/moedas nos vídeos
 - Ranking de criadores por pontuação
-- Aba Buscar com filtro por usuário, legenda, música e hashtag
 - Publicação usando URL de vídeo `.mp4`
 - Publicação com seleção de vídeo local do aparelho
 
+## Loja / Pagamentos
+
+A loja usa gateway fake PIX para simular compra de moedas e VIP.
+
+Rotas:
+
+- `GET /api/shop/products`
+- `POST /api/shop/checkout`
+- `POST /api/shop/payments/:id/simulate-paid`
+- `GET /api/shop/payments`
+- `GET /api/admin/payments`
+
+Produtos iniciais:
+
+- 100 moedas
+- 500 moedas
+- 1200 moedas
+- VIP Mensal
+- VIP 3 Meses
+
 ## Storage Supabase
 
-A V13 usa `server/storageProvider.js`.
+A V13/V14 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -83,34 +90,12 @@ Para usar Supabase Storage, configure no Replit Secrets ou servidor:
 
 Documentação completa: `docs/STORAGE_SUPABASE.md`.
 
-## Produção e upload
-
-Variáveis gerais:
-
-| Variável | Função | Padrão |
-|---|---|---|
-| `PORT` | Porta do backend | `3001` |
-| `NODE_ENV` | Modo do servidor | `development` |
-| `CORS_ORIGIN` | Domínio permitido no CORS | `*` |
-| `TRUST_PROXY` | Ativa proxy reverso quando `true` | `false` |
-| `UPLOADS_DIR` | Pasta local dos uploads | `uploads` |
-| `MAX_UPLOAD_MB` | Tamanho máximo do vídeo em MB | `200` |
-| `PUBLIC_UPLOAD_BASE_URL` | URL pública/CDN dos uploads | vazio |
-| `JSON_LIMIT` | Limite do body JSON | `10mb` |
-
-Documentação de produção: `docs/PRODUCAO.md`.
-
 ## Rodar no Replit
 
 ```bash
 npm install
 npm run dev
 ```
-
-O comando `npm run dev` sobe duas coisas ao mesmo tempo:
-
-- Vite/React no frontend
-- Express API V13 com SQLite no backend, porta `3001`
 
 ## Rodar em produção
 
@@ -122,9 +107,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13
-npm run server     # apenas backend V13
-npm run server:v13 # apenas backend V13
+npm run dev        # frontend + backend V13/V14
+npm run server     # apenas backend V13/V14
+npm run server:v13 # apenas backend V13/V14
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -224,11 +209,12 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 - Arquivos auxiliares do SQLite: `server/data/gxst.sqlite-wal` e `server/data/gxst.sqlite-shm`
 - Upload local: `uploads/`
 - Upload Supabase: bucket configurado em `SUPABASE_BUCKET`
+- Pagamentos: tabela `payments`
 
 Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 ## Próximas melhorias
 
-- Gateway real de pagamento
+- Integração com gateway real
 - Página web externa dos criadores
 - Conversão automática de vídeo para formato leve
