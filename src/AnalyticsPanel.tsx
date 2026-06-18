@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { BarChart3, Crown, Eye, Gift, Heart, RefreshCw, TrendingUp, Video, X } from "lucide-react";
 
 type Summary = {
@@ -194,7 +195,7 @@ export function AnalyticsPanel() {
   );
 }
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: number | string }) {
+function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: number | string }) {
   return (
     <div className="metric-box">
       <span>{icon}</span>
