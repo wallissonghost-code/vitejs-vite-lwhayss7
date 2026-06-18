@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Bell, CheckCheck, Gift, Heart, MessageCircle, RefreshCw, UserPlus, X } from "lucide-react";
+import { Bell, CheckCheck, Gift, Heart, MessageCircle, MessageSquareText, RefreshCw, UserPlus, X } from "lucide-react";
 
 type NotificationItem = {
   id: number;
   actorUser: string;
-  type: "comment" | "like" | "gift" | "follow" | string;
+  type: "comment" | "like" | "gift" | "follow" | "dm" | string;
   videoId?: number | null;
   message: string;
   read: boolean;
@@ -23,6 +23,7 @@ function iconFor(type: string) {
   if (type === "like") return <Heart size={18} />;
   if (type === "gift") return <Gift size={18} />;
   if (type === "follow") return <UserPlus size={18} />;
+  if (type === "dm") return <MessageSquareText size={18} />;
   return <Bell size={18} />;
 }
 
