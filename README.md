@@ -2,22 +2,21 @@
 
 App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Express + SQLite.
 
-## O que já tem na V18
+## O que já tem na V19
 
 - Frontend React com feed vertical estilo vídeos curtos
 - Backend Node/Express com API real
 - Servidor principal `server/v13.js`
+- Comentários em tempo real por polling leve
+- Botão flutuante **Comentários**
+- Painel live para escolher vídeo e comentar
+- Busca incremental por `afterId`
+- Envio de comentário sem recarregar o app
+- Lista atualizando automaticamente
 - Sistema de visualizações reais por vídeo
 - Tracker automático de views no frontend
-- Registro de view por usuário logado ou visitante anônimo
-- Deduplicação de visualização recente por vídeo
-- Views entrando nas métricas do criador
-- Views entrando nas métricas admin
-- Views influenciando o Feed IA
+- Views entrando nas métricas e no Feed IA
 - Painel de métricas avançadas
-- Botão flutuante **Métricas**
-- Timeline dos últimos 7 dias com views
-- Ranking dos melhores vídeos por performance
 - Conversão automática opcional de vídeo com ffmpeg
 - Página pública externa dos criadores em `/@usuario`
 - Storage real com suporte a Supabase Storage
@@ -28,23 +27,32 @@ App de vídeos curtos estilo feed vertical, criado em React + Vite + Node/Expres
 - Feed IA com algoritmo de recomendação
 - Notificações reais com tabela SQLite
 
-## Visualizações reais
+## Comentários em tempo real
 
-O app agora registra visualizações automaticamente quando um vídeo aparece/toca.
+O botão **Comentários** abre um painel live.
+
+Rotas:
+
+- `GET /api/videos/:id/comments/live`
+- `POST /api/videos/:id/comments/live`
+- `GET /api/comments/live/summary`
+
+Como funciona:
+
+- o painel busca comentários novos a cada poucos segundos
+- usa `afterId` para trazer somente comentários novos
+- permite enviar comentário sem recarregar o app
+- comentários continuam usando a tabela `comments`
+- notificações de comentário seguem funcionando pelo trigger SQLite existente
+
+## Visualizações reais
 
 Rotas:
 
 - `POST /api/videos/:id/view`
 - `GET /api/videos/:id/views`
 
-Como funciona:
-
-- o frontend observa os elementos `<video>`
-- quando o vídeo fica visível ou toca, envia uma view
-- usuário logado conta por `userId`
-- usuário anônimo conta por `visitorId`
-- views repetidas do mesmo usuário/visitante no mesmo vídeo são ignoradas por janela de tempo
-- as views entram no score do Feed IA e no painel de métricas
+O tracker observa os elementos `<video>` e registra view quando o vídeo aparece ou toca.
 
 ## Métricas avançadas
 
@@ -53,36 +61,9 @@ Rotas:
 - `GET /api/analytics/creator`
 - `GET /api/admin/analytics`
 
-Métricas do criador:
-
-- vídeos publicados
-- views
-- curtidas
-- comentários
-- compartilhamentos
-- presentes
-- score geral
-- ganhos estimados
-- melhores vídeos
-- atividade dos últimos 7 dias
-
-Métricas admin:
-
-- total de usuários
-- total de vídeos
-- views totais
-- viewers únicos
-- curtidas totais
-- presentes totais
-- pagamentos pagos
-- receita fake
-- denúncias abertas
-- saques pendentes
-- top criadores
-
 ## Conversão de vídeo
 
-A V18 tenta converter vídeos automaticamente com ffmpeg.
+A V19 tenta converter vídeos automaticamente com ffmpeg.
 
 Se o ambiente não tiver ffmpeg, o upload continua funcionando com o arquivo original.
 
@@ -130,7 +111,7 @@ Rotas:
 
 ## Storage Supabase
 
-A V18 usa `server/storageProvider.js`.
+A V19 usa `server/storageProvider.js`.
 
 Sem configurar nada, o app usa storage local:
 
@@ -169,9 +150,9 @@ npm start
 ## Scripts úteis
 
 ```bash
-npm run dev        # frontend + backend V13/V18
-npm run server     # apenas backend V13/V18
-npm run server:v13 # apenas backend V13/V18
+npm run dev        # frontend + backend V13/V19
+npm run server     # apenas backend V13/V19
+npm run server:v13 # apenas backend V13/V19
 npm run server:v12 # backend V12 backup
 npm run server:v5  # backend antigo V5 backup
 npm run server:json # backend antigo em JSON, caso precise voltar
@@ -262,6 +243,7 @@ Entre com essa conta e toque no botão flutuante **Admin** para abrir o painel a
 ## Onde os dados ficam
 
 - Banco SQLite: `server/data/gxst.sqlite`
+- Comentários: tabela `comments`
 - Views: tabela `video_views`
 - Upload local: `uploads/`
 - Upload Supabase: bucket configurado em `SUPABASE_BUCKET`
@@ -273,4 +255,4 @@ Esses arquivos são gerados em tempo de execução e ficam fora do Git.
 
 - Integração com gateway real
 - SEO avançado para páginas públicas
-- Sistema de comentários em tempo real
+- Chat direto entre usuários
