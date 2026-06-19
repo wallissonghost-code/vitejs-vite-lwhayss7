@@ -15,6 +15,12 @@ const subscriptionPlans = [
   { id: "vip_creator", title: "VIP Criador", days: 30, coins: 300, perks: ["Tudo do Premium", "Badge VIP", "Maior apoio ao criador"] }
 ];
 
+const defaultCreators = [
+  { user: "ghost.creator", name: "Ghost Creator", bio: "Criador em destaque do GXST Vibes.", seed: "ghostcreator" },
+  { user: "modelo.fx", name: "Modelo FX", bio: "Modelo premium para capas e tendências.", seed: "modelofx" },
+  { user: "gxst.vibes", name: "GXST Vibes", bio: "Perfil oficial de trends, ranking e lives.", seed: "gxstvibes" }
+];
+
 function initSubscriptionStore() {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS creator_subscriptions (
@@ -43,6 +49,10 @@ function planById(planId) {
 
 function cleanUsername(value) {
   return String(value || "").replace("@", "").trim().toLowerCase();
+}
+
+function avatarUrl(seed) {
+  return `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
 }
 
 function subscriptionStatus(row) {
@@ -74,35 +84,62 @@ function creatorStats(userId, username) {
   return { videos: Number(videos || 0), subscribers: Number(subs || 0) };
 }
 
+function insertCreator(username, name, bio, avatar) {
+  if (!username || getUserByUsername(username)) return getUserByUsername(username);
+  try {
+    sqlite.prepare(`
+      INSERT INTO users (user, name, bio, avatar, coins, followers, following_users, liked_videos, saved_videos, password_hash, created_at)
+      VALUES (?, ?, ?, ?, 0, 0, '[]', '[]', '[]', '', ?)
+    `).run(username, name, bio, avatar, new Date().toISOString());
+    return getUserByUsername(username);
+  } catch {
+    return getUserByUsername(username);
+  }
+}
+
+function ensureDefaultCreators() {
+  defaultCreators.forEach((creator) => {
+    insertCreator(creator.user, creator.name, creator.bio, avatarUrl(creator.seed));
+  });
+}
+
 function ensureVideoCreators() {
+  ensureDefaultCreators();
   const rows = sqlite.prepare("SELECT user, name, avatar FROM videos GROUP BY user ORDER BY id DESC LIMIT 30").all();
   rows.forEach((row) => {
     const username = cleanUsername(row.user);
-    if (!username || getUserByUsername(username)) return;
-    const name = row.name || username;
-    const avatar = row.avatar || `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(username)}`;
-    try {
-      sqlite.prepare(`
-        INSERT INTO users (user, name, bio, avatar, coins, followers, following_users, liked_videos, saved_videos, password_hash, created_at)
-        VALUES (?, ?, ?, ?, 0, 0, '[]', '[]', '[]', '', ?)
-      `).run(username, name, "Criador de exemplo do GXST Vibes.", avatar, new Date().toISOString());
-      const created = getUserByUsername(username);
-      if (created) sqlite.prepare("UPDATE videos SET user_id = ? WHERE user = ?").run(created.id, username);
-    } catch {
-      // ignore seed creator conflicts
+    if (!username) return;
+    const created = insertCreator(
+      username,
+      row.name || username,
+      "Criador de exemplo do GXST Vibes.",
+      row.avatar || avatarUrl(username)
+    );
+    if (created) {
+      try {
+        sqlite.prepare("UPDATE videos SET user_id = ? WHERE user = ?").run(created.id, username);
+      } catch {
+        // ignore video link errors
+      }
     }
   });
 }
 
 function creatorList() {
   ensureVideoCreators();
-  const rows = sqlite.prepare(`
+  let rows = sqlite.prepare(`
     SELECT users.*
     FROM users
     WHERE EXISTS (SELECT 1 FROM videos WHERE videos.user_id = users.id OR videos.user = users.user)
+       OR users.user IN ('ghost.creator', 'modelo.fx', 'gxst.vibes')
     ORDER BY followers DESC, id DESC
     LIMIT 50
   `).all();
+
+  if (!rows.length) {
+    ensureDefaultCreators();
+    rows = sqlite.prepare("SELECT * FROM users WHERE user IN ('ghost.creator', 'modelo.fx', 'gxst.vibes') ORDER BY id DESC").all();
+  }
 
   return rows.map((row) => ({
     ...publicUser({
@@ -143,6 +180,7 @@ function notifySubscription({ creatorId, subscriber }) {
 
 export function registerSubscriptionRoutes(app, getAuthUser) {
   initSubscriptionStore();
+  ensureDefaultCreators();
   const requireAuth = makeRequireAuth(getAuthUser);
 
   app.get("/api/subscriptions/plans", (_req, res) => {
